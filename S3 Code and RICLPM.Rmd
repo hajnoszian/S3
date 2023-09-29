@@ -1,0 +1,568 @@
+---
+title: "S3 RICLPM"
+author: "Ian Hajnosz"
+date: "2023-09-29"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Modeling Approach
+
+The overall steps are:
+
+Model Fit (attempt to do those covariate models)
+Tests of constraints over time: A) Factor invariance (since we use factors) B) Effects time-invariance, 
+
+#### Factorial/Measurement invariance test (Mulder & Hamaker, 2020)
+1) Configural invariance--no constraints on factor loadings over time on w/in unit factors -- does the model fit at all?
+2) Weak Invariance -- constrain the factor loadings to be invariant, compare to unconstrained model. If non-sig, we can conclude the constraints are tenable. If sig, we cannot conclude weak invariance
+3) Strong invariance -- constrain the intercepts of the model to be invariant, estimate the latent means from the 2nd occassion onward. 
+
+See RICLPM1.ext3 for this stepwise process (just multiple indicator, but not latent)
+See RICLPM5 for the latent version
+
+I need to do a bit of both RICLPM1 for iterations, but RICLPM5 for the latent
+#### Effects time-invariance
+1) Constrain lagged regression coefficients to be time invariant, compare to unconstrained model. If non-sig test (i.e. the models are about the same) we can conclude the constraints are tenable and the dynamics are time in-variant. If not tenable, we can conclude there is a some developmental change across the time span (Mulder & Hamaker, 2020) 
+2) Constrain the means (the RIs) to be time invariant, compare to unconstrained model. If non-sig, it is evidence the construct is stable at the population level for the duration of the study. If sig, it implies there is on average a change in variable over time, perhaps a developmental trend. (Mulder & Hamaker, 2020).
+
+See RICLPM5 in the tutorial for this model code.
+
+
+
+
+
+
+#### Coding Approach
+I'll use this variable notation:
+x11, x21, x31, x41 = xWaveVar. So waves 1 through 4 for x variable 1
+x12, x22, x32, x42 = So waves 1 through 4 for x variable 2 etc.
+
+## Base Model
+
+### Fit and Factor Invariance
+#### Configural
+```{r}
+base.m1 <- '
+
+  #####################
+  # MEASUREMENT MODEL #
+  #####################
+  
+  # Factor models for km at 6 waves (UNconstrained)
+  Fkm1 =~ 1*km11 + 1*km12 + 1*km13 + 1*km14 + 1*km15 + 1*km16
+  Fkm2 =~ 1*km21 + 1*km22 + 1*km23 + 1*km24 + 1*km25 + 1*km26
+  Fkm3 =~ 1*km31 + 1*km32 + 1*km33 + 1*km34 + 1*km35 + 1*km36
+  Fkm4 =~ 1*km41 + 1*km42 + 1*km43 + 1*km44 + 1*km45 + 1*km46
+  Fkm5 =~ 1*km51 + 1*km52 + 1*km53 + 1*km54 + 1*km55 + 1*km56
+  Fkm6 =~ 1*km61 + 1*km62 + 1*km63 + 1*km64 + 1*km65 + 1*km66
+  
+  # Factor models for ppr at 6 waves (UNconstrained)
+  Fppr1 =~ 1*ppr11 + 1*ppr12 + 1*ppr13 + 1*ppr14
+  Fppr2 =~ 1*ppr21 + 1*ppr22 + 1*ppr23 + 1*ppr24
+  Fppr3 =~ 1*ppr31 + 1*ppr32 + 1*ppr33 + 1*ppr34
+  Fppr4 =~ 1*ppr41 + 1*ppr42 + 1*ppr43 + 1*ppr44
+  Fppr5 =~ 1*ppr51 + 1*ppr52 + 1*ppr53 + 1*ppr54
+  Fppr6 =~ 1*ppr61 + 1*ppr62 + 1*ppr63 + 1*ppr64
+  
+  ################
+  # BETWEEN PART #
+  ################
+  
+  # Create between factors (RIs)
+  RIkm =~ 1*Fkm1 + 1*Fkm2 + 1*Fkm3 + 1*Fkm4 + 1*Fkm5 + 1*Fkm6
+  RIppr =~ 1*Fppr1 + 1*Fppr2 + 1*Fppr3 + 1*Fppr4 + 1*Fppr5 + 1*Fppr6
+  
+  # Set residual variances of all Fkm and Fppr vars to 0
+  # I think this specifies all variance of the factors goes to either w/n or b/n
+  Fkm1 ~~ 0*Fkm1
+  Fkm2 ~~ 0*Fkm2
+  Fkm3 ~~ 0*Fkm3
+  Fkm4 ~~ 0*Fkm4
+  Fkm5 ~~ 0*Fkm5
+  Fkm6 ~~ 0*Fkm6
+  Fppr1 ~~ 0*Fppr1
+  Fppr2 ~~ 0*Fppr2
+  Fppr3 ~~ 0*Fppr3
+  Fppr4 ~~ 0*Fppr4
+  Fppr5 ~~ 0*Fppr5
+  Fppr6 ~~ 0*Fppr6
+
+  ###############
+  # WITHIN PART #
+  ###############
+
+  # Create within-components
+  WFkm1 =~ 1*Fkm1
+  WFkm2 =~ 1*Fkm2
+  WFkm3 =~ 1*Fkm3
+  WFkm4 =~ 1*Fkm4
+  WFkm5 =~ 1*Fkm5
+  WFkm6 =~ 1*Fkm6
+  
+  WFppr1 =~ 1*Fppr1
+  WFppr2 =~ 1*Fppr2
+  WFppr3 =~ 1*Fppr3
+  WFppr4 =~ 1*Fppr4
+  WFppr5 =~ 1*Fppr5
+  WFppr6 =~ 1*Fppr6
+  
+  # Specify lagged effects between within-person centered latent variables
+  WFkm2 + WFppr2 ~ WFkm1 + WFppr1
+  WFkm3 + WFppr3 ~ WFkm2 + WFppr2
+  WFkm4 + WFppr4 ~ WFkm3 + WFppr3
+  WFkm5 + WFppr5 ~ WFkm4 + WFppr4
+  WFkm6 + WFppr6 ~ WFkm5 + WFppr5
+  
+  # Estimate correlations within same wave
+  WFkm1 ~~ WFppr1 #I am pretty sure they missed this line in the og tutorial
+  WFkm2 ~~ WFppr2
+  WFkm3 ~~ WFppr3
+  WFkm4 ~~ WFppr4
+  WFkm5 ~~ WFppr5
+  WFkm6 ~~ WFppr6
+  
+  ##########################
+  # ADDITIONAL CONSTRAINTS #
+  ##########################
+  
+  # Set correlations between between-factors (RIs) and within-factors at wave 1 at 0
+  RIkm + RIppr ~~ 0*WFkm1 + 0*WFppr1
+  
+'
+
+
+base.m1.fit <- cfa(base.m1,
+                   data = data,
+                   missing = "ML"
+                   )
+summary(base.m1.fit)
+```
+do I need to specify covariance between the RIs? ANd do I need to specify RI covariance to themselves? (Or are those both handled by downstream covariances? I remember vaguely something about that in a paper somewhere)
+EDIT:
+By using cfa() (eg rather than sem or lavaan), lavaan default will be to include freely correlated residuals 
+
+#### W/Demographic Covariate
+```{r}
+base.m1D <- '
+
+  #####################
+  # MEASUREMENT MODEL #
+  #####################
+  
+  # Factor models for km at 6 waves (UNconstrained)
+  Fkm1 =~ 1*km11 + 1*km12 + 1*km13 + 1*km14 + 1*km15 + 1*km16
+  Fkm2 =~ 1*km21 + 1*km22 + 1*km23 + 1*km24 + 1*km25 + 1*km26
+  Fkm3 =~ 1*km31 + 1*km32 + 1*km33 + 1*km34 + 1*km35 + 1*km36
+  Fkm4 =~ 1*km41 + 1*km42 + 1*km43 + 1*km44 + 1*km45 + 1*km46
+  Fkm5 =~ 1*km51 + 1*km52 + 1*km53 + 1*km54 + 1*km55 + 1*km56
+  Fkm6 =~ 1*km61 + 1*km62 + 1*km63 + 1*km64 + 1*km65 + 1*km66
+  
+  # Factor models for ppr at 6 waves (UNconstrained)
+  Fppr1 =~ 1*ppr11 + 1*ppr12 + 1*ppr13 + 1*ppr14
+  Fppr2 =~ 1*ppr21 + 1*ppr22 + 1*ppr23 + 1*ppr24
+  Fppr3 =~ 1*ppr31 + 1*ppr32 + 1*ppr33 + 1*ppr34
+  Fppr4 =~ 1*ppr41 + 1*ppr42 + 1*ppr43 + 1*ppr44
+  Fppr5 =~ 1*ppr51 + 1*ppr52 + 1*ppr53 + 1*ppr54
+  Fppr6 =~ 1*ppr61 + 1*ppr62 + 1*ppr63 + 1*ppr64
+  
+  ################
+  # BETWEEN PART #
+  ################
+  
+  # Create between factors (RIs)
+  RIkm =~ 1*Fkm1 + 1*Fkm2 + 1*Fkm3 + 1*Fkm4 + 1*Fkm5 + 1*Fkm6 + GENDER + RELLENGTH
+  RIppr =~ 1*Fppr1 + 1*Fppr2 + 1*Fppr3 + 1*Fppr4 + 1*Fppr5 + 1*Fppr6 + GENDER + RELLENGTH
+  
+  # Set residual variances of all Fkm and Fppr vars to 0
+  # I think this specifies all variance of the factors goes to either w/n or b/n
+  Fkm1 ~~ 0*Fkm1
+  Fkm2 ~~ 0*Fkm2
+  Fkm3 ~~ 0*Fkm3
+  Fkm4 ~~ 0*Fkm4
+  Fkm5 ~~ 0*Fkm5
+  Fkm6 ~~ 0*Fkm6
+  Fppr1 ~~ 0*Fppr1
+  Fppr2 ~~ 0*Fppr2
+  Fppr3 ~~ 0*Fppr3
+  Fppr4 ~~ 0*Fppr4
+  Fppr5 ~~ 0*Fppr5
+  Fppr6 ~~ 0*Fppr6
+
+  ###############
+  # WITHIN PART #
+  ###############
+
+  # Create within-components
+  WFkm1 =~ 1*Fkm1
+  WFkm2 =~ 1*Fkm2
+  WFkm3 =~ 1*Fkm3
+  WFkm4 =~ 1*Fkm4
+  WFkm5 =~ 1*Fkm5
+  WFkm6 =~ 1*Fkm6
+  
+  WFppr1 =~ 1*Fppr1
+  WFppr2 =~ 1*Fppr2
+  WFppr3 =~ 1*Fppr3
+  WFppr4 =~ 1*Fppr4
+  WFppr5 =~ 1*Fppr5
+  WFppr6 =~ 1*Fppr6
+  
+  # Specify lagged effects between within-person centered latent variables
+  WFkm2 + WFppr2 ~ WFkm1 + WFppr1
+  WFkm3 + WFppr3 ~ WFkm2 + WFppr2
+  WFkm4 + WFppr4 ~ WFkm3 + WFppr3
+  WFkm5 + WFppr5 ~ WFkm4 + WFppr4
+  WFkm6 + WFppr6 ~ WFkm5 + WFppr5
+  
+  # Estimate correlations within same wave
+  WFkm1 ~~ WFppr1 #I am pretty sure they missed this line in the og tutorial
+  WFkm2 ~~ WFppr2
+  WFkm3 ~~ WFppr3
+  WFkm4 ~~ WFppr4
+  WFkm5 ~~ WFppr5
+  WFkm6 ~~ WFppr6
+  
+  ##########################
+  # ADDITIONAL CONSTRAINTS #
+  ##########################
+  
+  # Set correlations between between-factors (RIs) and within-factors at wave 1 at 0
+  RIkm + RIppr ~~ 0*WFkm1 + 0*WFppr1
+  
+'
+
+
+base.m1.fit <- cfa(base.m1,
+                   data = data,
+                   missing = "ML"
+                   )
+summary(base.m1.fit)
+```
+
+
+#### Weak
+```{r}
+base.m2 <- '
+
+  #####################
+  # MEASUREMENT MODEL #
+  #####################
+  
+  # Factor models for km at 6 waves (Constrained)
+  Fkm1 =~ a*km11 + b*km12 + c*km13 + d*km14 + e*km15 + f*km16
+  Fkm2 =~ a*km21 + b*km22 + c*km23 + d*km24 + e*km25 + f*km26
+  Fkm3 =~ a*km31 + b*km32 + c*km33 + d*km34 + e*km35 + f*km36
+  Fkm4 =~ a*km41 + b*km42 + c*km43 + d*km44 + e*km45 + f*km46
+  Fkm5 =~ a*km51 + b*km52 + c*km53 + d*km54 + e*km55 + f*km56
+  Fkm6 =~ a*km61 + b*km62 + c*km63 + d*km64 + e*km65 + f*km66
+  
+  # Factor models for ppr at 6 waves (Constrained)
+  Fppr1 =~ g*ppr11 + h*ppr12 + i*ppr13 + j*ppr14
+  Fppr2 =~ g*ppr21 + h*ppr22 + i*ppr23 + j*ppr24
+  Fppr3 =~ g*ppr31 + h*ppr32 + i*ppr33 + j*ppr34
+  Fppr4 =~ g*ppr41 + h*ppr42 + i*ppr43 + j*ppr44
+  Fppr5 =~ g*ppr51 + h*ppr52 + i*ppr53 + j*ppr54
+  Fppr6 =~ g*ppr61 + h*ppr62 + i*ppr63 + j*ppr64
+  
+  ################
+  # BETWEEN PART #
+  ################
+  
+  # Create between factors (RIs)
+  RIkm =~ 1*Fkm1 + 1*Fkm2 + 1*Fkm3 + 1*Fkm4 + 1*Fkm5 + 1*Fkm6
+  RIppr =~ 1*Fppr1 + 1*Fppr2 + 1*Fppr3 + 1*Fppr4 + 1*Fppr5 + 1*Fppr6
+  
+  # Set residual variances of all Fkm and Fppr vars to 0
+  # I think this specifies all variance of the factors goes to either w/n or b/n
+  Fkm1 ~~ 0*Fkm1
+  Fkm2 ~~ 0*Fkm2
+  Fkm3 ~~ 0*Fkm3
+  Fkm4 ~~ 0*Fkm4
+  Fkm5 ~~ 0*Fkm5
+  Fkm6 ~~ 0*Fkm6
+  Fppr1 ~~ 0*Fppr1
+  Fppr2 ~~ 0*Fppr2
+  Fppr3 ~~ 0*Fppr3
+  Fppr4 ~~ 0*Fppr4
+  Fppr5 ~~ 0*Fppr5
+  Fppr6 ~~ 0*Fppr6
+
+  ###############
+  # WITHIN PART #
+  ###############
+
+  # Create within-components
+  WFkm1 =~ 1*Fkm1
+  WFkm2 =~ 1*Fkm2
+  WFkm3 =~ 1*Fkm3
+  WFkm4 =~ 1*Fkm4
+  WFkm5 =~ 1*Fkm5
+  WFkm6 =~ 1*Fkm6
+  
+  WFppr1 =~ 1*Fppr1
+  WFppr2 =~ 1*Fppr2
+  WFppr3 =~ 1*Fppr3
+  WFppr4 =~ 1*Fppr4
+  WFppr5 =~ 1*Fppr5
+  WFppr6 =~ 1*Fppr6
+  
+  # Specify lagged effects between within-person centered latent variables
+  WFkm2 + WFppr2 ~ WFkm1 + WFppr1
+  WFkm3 + WFppr3 ~ WFkm2 + WFppr2
+  WFkm4 + WFppr4 ~ WFkm3 + WFppr3
+  WFkm5 + WFppr5 ~ WFkm4 + WFppr4
+  WFkm6 + WFppr6 ~ WFkm5 + WFppr5
+  
+  # Estimate correlations within same wave
+  WFkm1 ~~ WFppr1 #I am pretty sure they missed this line in the og tutorial
+  WFkm2 ~~ WFppr2
+  WFkm3 ~~ WFppr3
+  WFkm4 ~~ WFppr4
+  WFkm5 ~~ WFppr5
+  WFkm6 ~~ WFppr6
+  
+  ##########################
+  # ADDITIONAL CONSTRAINTS #
+  ##########################
+  
+  # Set correlations between between-factors (RIs) and within-factors at wave 1 at 0
+  RIkm + RIppr ~~ 0*WFkm1 + 0*WFppr1
+  
+'
+
+
+base.m2.fit <- cfa(base.m2,
+                   data = data,
+                   missing = "ML"
+                   )
+summary(base.m2.fit)
+```
+
+#### Weak w/Demographic Covariate
+
+```{r}
+base.m2D <- '
+
+  #####################
+  # MEASUREMENT MODEL #
+  #####################
+  
+  # Factor models for km at 6 waves (Constrained)
+  Fkm1 =~ a*km11 + b*km12 + c*km13 + d*km14 + e*km15 + f*km16
+  Fkm2 =~ a*km21 + b*km22 + c*km23 + d*km24 + e*km25 + f*km26
+  Fkm3 =~ a*km31 + b*km32 + c*km33 + d*km34 + e*km35 + f*km36
+  Fkm4 =~ a*km41 + b*km42 + c*km43 + d*km44 + e*km45 + f*km46
+  Fkm5 =~ a*km51 + b*km52 + c*km53 + d*km54 + e*km55 + f*km56
+  Fkm6 =~ a*km61 + b*km62 + c*km63 + d*km64 + e*km65 + f*km66
+  
+  # Factor models for ppr at 6 waves (Constrained)
+  Fppr1 =~ g*ppr11 + h*ppr12 + i*ppr13 + j*ppr14
+  Fppr2 =~ g*ppr21 + h*ppr22 + i*ppr23 + j*ppr24
+  Fppr3 =~ g*ppr31 + h*ppr32 + i*ppr33 + j*ppr34
+  Fppr4 =~ g*ppr41 + h*ppr42 + i*ppr43 + j*ppr44
+  Fppr5 =~ g*ppr51 + h*ppr52 + i*ppr53 + j*ppr54
+  Fppr6 =~ g*ppr61 + h*ppr62 + i*ppr63 + j*ppr64
+  
+  ################
+  # BETWEEN PART #
+  ################
+  
+  # Create between factors (RIs)
+  RIkm =~ 1*Fkm1 + 1*Fkm2 + 1*Fkm3 + 1*Fkm4 + 1*Fkm5 + 1*Fkm6 + GENDER + RELLENGTH
+  RIppr =~ 1*Fppr1 + 1*Fppr2 + 1*Fppr3 + 1*Fppr4 + 1*Fppr5 + 1*Fppr6 + GENDER + RELLENGTH
+  
+  # Set residual variances of all Fkm and Fppr vars to 0
+  # I think this specifies all variance of the factors goes to either w/n or b/n
+  Fkm1 ~~ 0*Fkm1
+  Fkm2 ~~ 0*Fkm2
+  Fkm3 ~~ 0*Fkm3
+  Fkm4 ~~ 0*Fkm4
+  Fkm5 ~~ 0*Fkm5
+  Fkm6 ~~ 0*Fkm6
+  Fppr1 ~~ 0*Fppr1
+  Fppr2 ~~ 0*Fppr2
+  Fppr3 ~~ 0*Fppr3
+  Fppr4 ~~ 0*Fppr4
+  Fppr5 ~~ 0*Fppr5
+  Fppr6 ~~ 0*Fppr6
+
+  ###############
+  # WITHIN PART #
+  ###############
+
+  # Create within-components
+  WFkm1 =~ 1*Fkm1
+  WFkm2 =~ 1*Fkm2
+  WFkm3 =~ 1*Fkm3
+  WFkm4 =~ 1*Fkm4
+  WFkm5 =~ 1*Fkm5
+  WFkm6 =~ 1*Fkm6
+  
+  WFppr1 =~ 1*Fppr1
+  WFppr2 =~ 1*Fppr2
+  WFppr3 =~ 1*Fppr3
+  WFppr4 =~ 1*Fppr4
+  WFppr5 =~ 1*Fppr5
+  WFppr6 =~ 1*Fppr6
+  
+  # Specify lagged effects between within-person centered latent variables
+  WFkm2 + WFppr2 ~ WFkm1 + WFppr1
+  WFkm3 + WFppr3 ~ WFkm2 + WFppr2
+  WFkm4 + WFppr4 ~ WFkm3 + WFppr3
+  WFkm5 + WFppr5 ~ WFkm4 + WFppr4
+  WFkm6 + WFppr6 ~ WFkm5 + WFppr5
+  
+  # Estimate correlations within same wave
+  WFkm1 ~~ WFppr1 #I am pretty sure they missed this line in the og tutorial
+  WFkm2 ~~ WFppr2
+  WFkm3 ~~ WFppr3
+  WFkm4 ~~ WFppr4
+  WFkm5 ~~ WFppr5
+  WFkm6 ~~ WFppr6
+  
+  ##########################
+  # ADDITIONAL CONSTRAINTS #
+  ##########################
+  
+  # Set correlations between between-factors (RIs) and within-factors at wave 1 at 0
+  RIkm + RIppr ~~ 0*WFkm1 + 0*WFppr1
+  
+'
+
+
+base.m2.fit <- cfa(base.m2,
+                   data = data,
+                   missing = "ML"
+                   )
+summary(base.m2.fit)
+```
+#### Strong
+
+```{r}
+base.m3 <- '
+
+  #####################
+  # MEASUREMENT MODEL #
+  #####################
+  
+  # Factor models for km at 6 waves (Constrained)
+  Fkm1 =~ a*km11 + b*km12 + c*km13 + d*km14 + e*km15 + f*km16
+  Fkm2 =~ a*km21 + b*km22 + c*km23 + d*km24 + e*km25 + f*km26
+  Fkm3 =~ a*km31 + b*km32 + c*km33 + d*km34 + e*km35 + f*km36
+  Fkm4 =~ a*km41 + b*km42 + c*km43 + d*km44 + e*km45 + f*km46
+  Fkm5 =~ a*km51 + b*km52 + c*km53 + d*km54 + e*km55 + f*km56
+  Fkm6 =~ a*km61 + b*km62 + c*km63 + d*km64 + e*km65 + f*km66
+  
+  # Factor models for ppr at 6 waves (Constrained)
+  Fppr1 =~ g*ppr11 + h*ppr12 + i*ppr13 + j*ppr14
+  Fppr2 =~ g*ppr21 + h*ppr22 + i*ppr23 + j*ppr24
+  Fppr3 =~ g*ppr31 + h*ppr32 + i*ppr33 + j*ppr34
+  Fppr4 =~ g*ppr41 + h*ppr42 + i*ppr43 + j*ppr44
+  Fppr5 =~ g*ppr51 + h*ppr52 + i*ppr53 + j*ppr54
+  Fppr6 =~ g*ppr61 + h*ppr62 + i*ppr63 + j*ppr64
+  
+  # Constrained intercepts over time (Strong invariance)
+  km11 + km21 + km31 + km41 + km51 + km61 ~ k*1
+  km12 + km22 + km32 + km42 + km52 + km62 ~ l*1
+  km13 + km23 + km33 + km43 + km53 + km63 ~ m*1
+  km14 + km24 + km34 + km44 + km54 + km64 ~ n*1
+  km15 + km25 + km35 + km45 + km55 + km65 ~ o*1
+  km16 + km26 + km36 + km46 + km56 + km66 ~ p*1
+  
+  ppr11 + ppr21 + ppr31 + ppr41 + ppr51 + ppr61 ~ q*1
+  ppr12 + ppr22 + ppr32 + ppr42 + ppr52 + ppr62 ~ r*1
+  ppr13 + ppr23 + ppr33 + ppr43 + ppr53 + ppr63 ~ s*1
+  ppr14 + ppr24 + ppr34 + ppr44 + ppr54 + ppr64 ~ t*1
+  ppr15 + ppr25 + ppr35 + ppr45 + ppr55 + ppr65 ~ u*1
+  ppr16 + ppr26 + ppr36 + ppr46 + ppr56 + ppr66 ~ v*1
+  
+  # Free latent means from t=2 onward (only do this in combination with constraints on intercepts, above)
+  Fkm2 + Fkm3 + Fkm4 + Fkm5 + Fkm6 +
+  Fppr1 + Fppr2 + Fppr3 + Fppr4 + Fppr5 + Fppr6 ~ 1
+  
+  ################
+  # BETWEEN PART #
+  ################
+  
+  # Create between factors (RIs)
+  RIkm =~ 1*Fkm1 + 1*Fkm2 + 1*Fkm3 + 1*Fkm4 + 1*Fkm5 + 1*Fkm6
+  RIppr =~ 1*Fppr1 + 1*Fppr2 + 1*Fppr3 + 1*Fppr4 + 1*Fppr5 + 1*Fppr6
+  
+  # Set residual variances of all Fkm and Fppr vars to 0
+  # I think this specifies all variance of the factors goes to either w/n or b/n
+  Fkm1 ~~ 0*Fkm1
+  Fkm2 ~~ 0*Fkm2
+  Fkm3 ~~ 0*Fkm3
+  Fkm4 ~~ 0*Fkm4
+  Fkm5 ~~ 0*Fkm5
+  Fkm6 ~~ 0*Fkm6
+  Fppr1 ~~ 0*Fppr1
+  Fppr2 ~~ 0*Fppr2
+  Fppr3 ~~ 0*Fppr3
+  Fppr4 ~~ 0*Fppr4
+  Fppr5 ~~ 0*Fppr5
+  Fppr6 ~~ 0*Fppr6
+
+  ###############
+  # WITHIN PART #
+  ###############
+
+  # Create within-components
+  WFkm1 =~ 1*Fkm1
+  WFkm2 =~ 1*Fkm2
+  WFkm3 =~ 1*Fkm3
+  WFkm4 =~ 1*Fkm4
+  WFkm5 =~ 1*Fkm5
+  WFkm6 =~ 1*Fkm6
+  
+  WFppr1 =~ 1*Fppr1
+  WFppr2 =~ 1*Fppr2
+  WFppr3 =~ 1*Fppr3
+  WFppr4 =~ 1*Fppr4
+  WFppr5 =~ 1*Fppr5
+  WFppr6 =~ 1*Fppr6
+  
+  # Specify lagged effects between within-person centered latent variables
+  WFkm2 + WFppr2 ~ WFkm1 + WFppr1
+  WFkm3 + WFppr3 ~ WFkm2 + WFppr2
+  WFkm4 + WFppr4 ~ WFkm3 + WFppr3
+  WFkm5 + WFppr5 ~ WFkm4 + WFppr4
+  WFkm6 + WFppr6 ~ WFkm5 + WFppr5
+  
+  # Estimate correlations within same wave
+  WFkm1 ~~ WFppr1 #I am pretty sure they missed this line in the og tutorial
+  WFkm2 ~~ WFppr2
+  WFkm3 ~~ WFppr3
+  WFkm4 ~~ WFppr4
+  WFkm5 ~~ WFppr5
+  WFkm6 ~~ WFppr6
+  
+  ##########################
+  # ADDITIONAL CONSTRAINTS #
+  ##########################
+  
+  # Set correlations between between-factors (RIs) and within-factors at wave 1 at 0
+  RIkm + RIppr ~~ 0*WFkm1 + 0*WFppr1
+  
+'
+
+
+base.m3.fit <- cfa(base.m3,
+                   data = data,
+                   missing = "ML"
+                   )
+summary(base.m3.fit)
+```
+
+
+### Effects Invariance
+
+
+
+## Covariate PA Model
+
+## Covariate RelSat Model
