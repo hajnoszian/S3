@@ -9,7 +9,226 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-### Modeling Approach
+```{r}
+library(haven)#for .sav loads
+library(tidyverse)
+
+```
+
+
+
+# Loading Data
+```{r}
+df0 <- read_sav("For Ian.sav")
+
+df1  <- read_sav("SEDC 2022-23 Phase 2 data Ian.sav") 
+```
+
+
+#### Data checks
+Baseline
+```{r}
+df0
+```
+
+
+Diary
+
+Do we have 6 days for everyone? How many people do we even have?
+```{r}
+df1 |> 
+  group_by(ID) |> 
+  count(ID)
+
+#So 92 people in this dataset, all have 6 rows worth of data. Great!
+```
+
+
+# Descriptives
+
+Histogram (dummy code)
+```{r}
+nrow(df) # = 352
+#Age
+p1 <- ggplot(df, aes(x = Age)) +
+  geom_histogram(binwidth = 1) +
+  labs(title = "Age Distribution (n=352)",
+       x = "Age (Binwidth = 1)",
+       y = "Count")
+#Race
+p2 <- ggplot(df, aes(x = Race)) +
+  geom_bar() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+  labs(title = "Ethnicity/Race Distribution (n=352)",
+       y = "Count")
+
+grid.arrange(p1,p2, nrow = 1)
+```
+
+Density (dummy code)
+```{r}
+p1 <- ggplot(df, aes(KM_P, group = Cond, fill = Cond)) +
+  geom_density(alpha = 0.6) +
+  scale_fill_viridis(discrete=TRUE, name = "Condition")+
+  labs(x = "Physiological Signs",
+       y = "Density")
+
+p2 <- ggplot(df, aes(KM_CSR, group = Cond, fill = Cond)) +
+  geom_density(alpha = 0.6) +
+  scale_fill_viridis(discrete=TRUE, name = "Condition")+
+  labs(x = "CSR Appraisal",
+       y = "Density")
+
+p3 <- ggplot(df, aes(KM_M, group = Cond, fill = Cond)) +
+  geom_density(alpha = 0.6) +
+  scale_fill_viridis(discrete=TRUE, name = "Condition")+
+  labs(x = "Prosocial Motivation",
+       y = "Density")
+
+p4 <- ggplot(df, aes(KM_L, group = Cond, fill = Cond)) +
+  geom_density(alpha = 0.6) +
+  scale_fill_viridis(discrete=TRUE, name = "Condition")+
+  labs(x = "Lexical Label",
+       y = "Density")
+
+grid.arrange(p1,p2,p3,p4, nrow = 2)
+```
+
+Violin (dummy code)
+```{r}
+p1 <- ggplot(df, aes(Cond, ANS_1, fill = Cond)) +
+  geom_violin() +
+  geom_boxplot(width = 0.1, color = "black", alpha = 0.4) +
+  scale_fill_viridis(discrete=TRUE, name = "Condition")+
+  labs(title = "Time 1 Autonomy Satisfaction",
+       x = "",
+       y = "")
+
+p2 <- ggplot(df, aes(Cond, ANF_1, fill = Cond)) +
+  geom_violin() +
+  geom_boxplot(width = 0.1, color = "black", alpha = 0.4) +
+  scale_fill_viridis(discrete=TRUE, name = "Condition")+
+  labs(title = "Time 1 Autonomy Frustration",
+       x = "",
+       y = "")
+p3 <- ggplot(df, aes(Cond, RNS_1, fill = Cond)) +
+  geom_violin() +
+  geom_boxplot(width = 0.1, color = "black", alpha = 0.4) +
+  scale_fill_viridis(discrete=TRUE, name = "Condition")+
+  labs(title = "Time 1 Relatedness Satisfaction",
+       x = "",
+       y = "")
+
+p4 <- ggplot(df, aes(Cond, RNF_1, fill = Cond)) +
+  geom_violin() +
+  geom_boxplot(width = 0.1, color = "black", alpha = 0.4) +
+  scale_fill_viridis(discrete=TRUE, name = "Condition")+
+  labs(title = "Time 1 Relatedness Frustration",
+       x = "",
+       y = "")
+p5 <- ggplot(df, aes(Cond, CNS_1, fill = Cond)) +
+  geom_violin() +
+  geom_boxplot(width = 0.1, color = "black", alpha = 0.4) +
+  scale_fill_viridis(discrete=TRUE, name = "Condition")+
+  labs(title = "Time 1 Competence Satisfaction",
+       x = "",
+       y = "")
+p6 <- ggplot(df, aes(Cond, CNF_1, fill = Cond)) +
+  geom_violin() +
+  geom_boxplot(width = 0.1, color = "black", alpha = 0.4) +
+  scale_fill_viridis(discrete=TRUE, name = "Condition")+
+  labs(title = "Time 1 Competence Frustration",
+       x = "",
+       y = "")
+
+grid.arrange(p1,p2,p3,p4,p5,p6, nrow = 3)
+ggsave("Time 1 By Condition.png")
+```
+
+
+Boxplot (dummy code)
+```{r}
+df_plot <- df %>% 
+  select("Cond", "ANS_1", "ANS_2") %>% 
+  pivot_longer(cols = c("ANS_1", "ANS_2"),
+               names_to = "Time",
+               values_to = "Score")
+
+p1 <- ggplot(df_plot, aes(x = Time, y = Score, fill = Cond)) +
+  geom_boxplot() +
+  scale_fill_viridis(discrete=TRUE, name = "Condition")+
+  labs(y = "Score")
+
+df_plot <- df %>% 
+  select("Cond", "ANF_1", "ANF_2") %>% 
+  pivot_longer(cols = c("ANF_1", "ANF_2"),
+               names_to = "Time",
+               values_to = "Score")
+
+p2 <- ggplot(df_plot, aes(x = Time, y = Score, fill = Cond)) +
+  geom_boxplot() +
+  scale_fill_viridis(discrete=TRUE, name = "Condition")+
+  labs(y = "Score")
+
+grid.arrange(p1, p2, nrow = 1)
+```
+#### Gender
+
+#### Trans
+
+#### Age
+```{r}
+df0 |> 
+  summarise(
+    AgeM = mean(age, na.rm = T),
+    AgeSD = sd(age, na.rm = T),
+    RelLen,
+    
+  )
+```
+
+
+#### Ethnicity
+
+#### Sexual Orientation
+
+#### Education
+
+#### Student
+
+#### Employed
+
+#### Income
+
+#### Relationship Status
+
+#### Relationship Length
+
+#### Living Situation
+
+#### Partner in Study?
+
+### Attachment
+
+### PRI (Baseline)
+
+### Relationship Satisfaction (Baseline)
+
+### Commitment (Baseline)
+
+### Trust (Baseline)
+
+### Intimacy/Closeness
+# RQ1
+Descriptive evaluation of the elicitors and frequency of kama muta
+
+
+
+#### Site comparison
+Will probably have to do some basic t-tests/barplots/violin plots here for some comparison between sites of KM and PPR
+
+
+# RQ2-3: Modeling Approach
 
 The overall steps are:
 
@@ -145,7 +364,7 @@ do I need to specify covariance between the RIs? ANd do I need to specify RI cov
 EDIT:
 By using cfa() (eg rather than sem or lavaan), lavaan default will be to include freely correlated residuals 
 
-#### W/Demographic Covariate
+#### Configural W/Demographic Covariate
 ```{r}
 base.m1D <- '
 
