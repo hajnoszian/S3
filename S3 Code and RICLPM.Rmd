@@ -12,7 +12,9 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 library(haven)#for .sav loads
 library(tidyverse)
-
+library(ggplot2)
+library(viridis)
+library(gridExtra)
 ```
 
 
@@ -21,30 +23,132 @@ library(tidyverse)
 ```{r}
 df0 <- read_sav("For Ian.sav")
 
-df1  <- read_sav("SEDC 2022-23 Phase 2 data Ian.sav") 
+df1  <- read_sav("SEDC 2022-23 Phase 2 data Ian.sav")
 ```
 
+Checking for ID consistency
+```{r}
+ID0 <- df0 |> 
+  group_by(ID) |> 
+  count(ID) |> 
+  select(ID)#88 IDs in baseline
+
+ID1 <- df1 |> 
+  group_by(ID) |> 
+  count(ID) |> 
+  select(ID)#92 IDs in survey?
+```
+Do we have mismatches?
+
+```{r}
+ID0$number <- row.names(ID0)
+ID1$number <- row.names(ID1)
+IDs <- merge(ID0, ID1, by = "number", all = TRUE)
+```
+
+Actually wait, there is no other info I can use to confirm (mis) alignment in either direction. I cannot confirm that person 120 in the baseline should be 201 or is simply missing in the later stages
+
+So we will lose some from the baseline to the daily merge
 
 #### Data checks
-Baseline
+Baseline Recoding
 ```{r}
-df0
-```
+table(df0$gend)
+table(df0$trans)
+table(df0$ethn)
+table(df0$ethn_TEXT)
+table(df0$sexorn)
+table(df0$myeduc)
+table(df0$employ)
+table(df0$relstat)
+table(df0$Parstudy)
 
+df0 <- 
+  mutate(df0,
+       gend = recode(factor(gend),
+                     "0" = "Man",
+                     "1" = "Woman",
+                     "2" = "NonbinaryGenderQueer",
+                     "4" = "AgenderGenderless"),
+       trans = recode(factor(trans),
+                      "0" = "No",
+                      "1" = "Yes",
+                      "2" = "DontKnow"),
+       ethn = recode(factor(ethn),
+                     "0" = "WhiteCaucasianAnglo",
+                     "1" = "BlackAfricanCaribbean",
+                     "2" = "HispanicLatinoaChicanoa",
+                     "3" = "EastAsian",
+                     "4" = "SouthAsian",
+                     "5" = "SoutheastAsian",
+                     "9" = "MixedMultipleEthnicGroups",
+                     "10" = "Additional"),
+       sexorn = recode(factor(sexorn),
+                       "0" = "HeterosexualStraight",
+                       "1" = "Gay",
+                       "2" = "Lesbian",
+                       "3" = "Queer",
+                       "4" = "BisexualPansexual",
+                       "6" = "Asexual"),
+       myeduc = recode(factor(myeduc),
+                       "2" = "UpperSecondary",
+                       "3" = "VocationalDegree",
+                       "4" = "UndergraduateDegree",
+                       "5" = "MastersDegree",
+                       "6" = "DoctorateProgressionalDegree",
+                       "7" = "Other"),
+       student = recode(factor(student),
+                        "0" = "No",
+                        "1" = "Yes"
+                        ),
+       employ = recode(factor(employ),
+                       "0" = "No",
+                       "1" = "PartTime",
+                       "2" = "FullTime"),
+       relstat = recode(factor(relstat),
+                        "2" = "DatingExclusive",
+                        "3" = "CommonLaw",
+                        "5" = "Engaged",
+                        "6" = "Married"),
+       Parstudy = recode(factor(Parstudy),
+                         "1" = "No",
+                         "2" = "Yes")
+       )
+df0$ethn[df0$ethn_TEXT == "Mixed White and east Asian (but happy to be grouped in mixed)"] <- "MixedMultipleEthnicGroups"
+```
+```{r}
+#For the merge of the baseline and daily, I only need a few vars from the baseline to show up. This will be a large, wide dataset eventually so may as well start making it cleaner here and take just want I need
+df <- df0 |> 
+  select(ID, gend, rellength)
+
+df <- merge(df, df1, by.x = "ID", by.y = "ID") #adding the demographic covariates to the daily data
+```
 
 Diary
 
 Do we have 6 days for everyone? How many people do we even have?
 ```{r}
-df1 |> 
+df |> 
   group_by(ID) |> 
   count(ID)
 
-#So 92 people in this dataset, all have 6 rows worth of data. Great!
+#at least we have 6 data points for each person!
 ```
 
-
 # Descriptives
+
+```{r}
+#I need baseline data, but using just the IDs that end up in the final merged df
+o1 <- df1 |> 
+  select(ID) |> 
+  unique()
+
+dfDem <- merge(df0, o1) #this should have the 87 folks from the final df, but in the baseline format (i.e. don't have to worry about recount tallys)
+#Generally shouldnt be a problem, but lets just avoid that here just in case
+
+dfDem$ID == unique(df$ID) #they're the same IDs! Woo!
+```
+##### Scaffolding Plotting Code
 
 Histogram (dummy code)
 ```{r}
@@ -172,54 +276,175 @@ p2 <- ggplot(df_plot, aes(x = Time, y = Score, fill = Cond)) +
 
 grid.arrange(p1, p2, nrow = 1)
 ```
-#### Gender
 
-#### Trans
+#### Gender & Trans
+```{r}
+prop.table(table(dfDem$gend))*100
+
+p1 <- ggplot(dfDem, aes(x = gend)) +
+  geom_bar() +
+  theme(axis.text.x = element_text(angle = 0, vjust = 0.5)) +
+  labs(title = "Ethnicity",
+       x="",
+       y = "Count")
+
+prop.table(table(dfDem$trans))*100
+p2 <- ggplot(dfDem, aes(x = trans)) +
+  geom_bar() +
+  theme(axis.text.x = element_text(angle = 0, vjust = 0.5)) +
+  labs(title = "Transgender",
+       x = "",
+       y = "Count")
+grid.arrange(p1,p2, nrow = 2)
+```
 
 #### Age
 ```{r}
-df0 |> 
+dfDem |> 
   summarise(
-    AgeM = mean(age, na.rm = T),
-    AgeSD = sd(age, na.rm = T),
-    RelLen,
-    
-  )
+    RelLenM = mean(rellength, na.rm = T),
+    RelLenSD = sd(rellength, na.rm = T)
+    )
+
+ggplot(dfDem, aes(x = age)) +
+  geom_histogram(binwidth = 1) +
+  labs(title = "Age Distribution",
+       x = "Age (Binwidth = 1)",
+       y = "Count")
+
+```
+
+#### Ethnicity
+```{r}
+prop.table(table(dfDem$ethn))*100
+
+ggplot(dfDem, aes(x = ethn)) +
+  geom_bar() +
+  theme(axis.text.x = element_text(angle = 30, vjust = 0.5)) +
+  labs(title = "Ethnicity",
+       x = "",
+       y = "Count")
+```
+
+#### Sexual Orientation
+```{r}
+prop.table(table(dfDem$sexorn))*100
+
+ggplot(dfDem, aes(x = sexorn)) +
+  geom_bar() +
+  theme(axis.text.x = element_text(angle = 30, vjust = 0.5)) +
+  labs(title = "Sexual Orientation",
+       x = "",
+       y = "Count")
+```
+#### Education
+```{r}
+prop.table(table(dfDem$myeduc))*100
+
+ggplot(dfDem, aes(x = myeduc)) +
+  geom_bar() +
+  theme(axis.text.x = element_text(angle = 30, vjust = 0.5)) +
+  labs(title = "Education",
+       x = "",
+       y = "Count")
+```
+#### Student
+```{r}
+prop.table(table(dfDem$student))*100
+
+ggplot(dfDem, aes(x = student)) +
+  geom_bar() +
+  theme(axis.text.x = element_text(angle = 0, vjust = 0.5)) +
+  labs(title = "Student Status",
+       x = "",
+       y = "Count")
+```
+
+#### Employed
+```{r}
+prop.table(table(dfDem$employ))*100
+
+ggplot(dfDem, aes(x = employ)) +
+  geom_bar() +
+  theme(axis.text.x = element_text(angle = 30, vjust = 0.5)) +
+  labs(title = "Employed",
+       x = "",
+       y = "Count")
+```
+
+#### Income
+This is rather difficult since we have different currencies being reflected here. Skipping for now.
+
+#### Relationship Status
+```{r}
+prop.table(table(dfDem$relstat))*100
+
+ggplot(dfDem, aes(x = relstat)) +
+  geom_bar() +
+  theme(axis.text.x = element_text(angle = 30, vjust = 0.5)) +
+  labs(title = "Relationship Status",
+       x = "",
+       y = "Count")
 ```
 
 
-#### Ethnicity
-
-#### Sexual Orientation
-
-#### Education
-
-#### Student
-
-#### Employed
-
-#### Income
-
-#### Relationship Status
-
 #### Relationship Length
+```{r}
+dfDem |> 
+  summarise(
+    RelLenM = mean(rellength, na.rm = T),
+    RelLenSD = sd(rellength, na.rm = T)
+    )
+
+ggplot(dfDem, aes(x = rellength)) +
+  geom_histogram(binwidth = 1) +
+  labs(title = "Month Distribution",
+       x = "Months (Binwidth = 1)",
+       y = "Count")
+
+ggplot(dfDem, aes(x = rellength)) +
+  geom_boxplot() +
+  labs(title = "Month Boxplot",
+     x = "Months",
+     y = "")
+
+#Density plot kinda sucks here
+#ggplot(dfDem, aes(rellength)) +
+#  geom_density(alpha = 0.6) +
+#  labs(x = "Months in Relationship",
+#       y = "Sample Density")
+
+```
 
 #### Living Situation
+Kinda tricky to plot. TBD for now.
 
-#### Partner in Study?
+#### Partner in Study
+```{r}
+prop.table(table(dfDem$Parstudy))*100
 
-### Attachment
+ggplot(dfDem, aes(x = Parstudy)) +
+  geom_bar() +
+  theme(axis.text.x = element_text(angle = 0, vjust = 0.5)) +
+  labs(title = "Partner in Study",
+       x = "",
+       y = "Count")
+```
+### Necessary?
 
-### PRI (Baseline)
+##### Attachment (Baseline)
 
-### Relationship Satisfaction (Baseline)
+##### PRI (Baseline)
 
-### Commitment (Baseline)
+##### Relationship Satisfaction (Baseline)
 
-### Trust (Baseline)
+##### Commitment (Baseline)
 
-### Intimacy/Closeness
-# RQ1
+##### Trust (Baseline)
+
+##### Intimacy/Closeness (Baseline)
+
+#RQ1
 Descriptive evaluation of the elicitors and frequency of kama muta
 
 
@@ -228,7 +453,15 @@ Descriptive evaluation of the elicitors and frequency of kama muta
 Will probably have to do some basic t-tests/barplots/violin plots here for some comparison between sites of KM and PPR
 
 
-# RQ2-3: Modeling Approach
+# RQ2-3: Modeling 
+## Reworking to Wide format
+Will need to rework the dataset to be wide format here:
+```{r}
+
+```
+
+
+## Model Approach
 
 The overall steps are:
 
