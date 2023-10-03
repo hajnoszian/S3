@@ -614,6 +614,11 @@ round(prop.table(table(o1$Evoker))*100, 1)
 ggplot(o1, aes(x = Evoker)) +
   geom_bar()
 ```
+Who were the "other" here?
+```{r}
+table(df$a_p2whatkm12_TEXT)
+```
+
 
 ```{r}
 #Same as code above, but with added markers for KM on that day
