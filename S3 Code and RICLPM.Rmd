@@ -43,14 +43,14 @@ Do we have mismatches?
 ```{r}
 ID0$number <- row.names(ID0)
 ID1$number <- row.names(ID1)
-IDs <- merge(ID0, ID1, by = "number", all = TRUE)
+IDs <- merge(ID0, ID1, by = "number", all = TRUE) #use this object to chart out the weird IDs here 
 ```
 
 Actually wait, there is no other info I can use to confirm (mis) alignment in either direction. I cannot confirm that person 120 in the baseline should be 201 or is simply missing in the later stages
 
 So we will lose some from the baseline to the daily merge
 
-#### Data checks
+#### Data checks and Recoding
 Baseline Recoding
 ```{r}
 table(df0$gend)
@@ -116,15 +116,39 @@ df0 <-
        )
 df0$ethn[df0$ethn_TEXT == "Mixed White and east Asian (but happy to be grouped in mixed)"] <- "MixedMultipleEthnicGroups"
 ```
+### Data Merge and Cleaning
 ```{r}
 #For the merge of the baseline and daily, I only need a few vars from the baseline to show up. This will be a large, wide dataset eventually so may as well start making it cleaner here and take just want I need
 df <- df0 |> 
   select(ID, gend, rellength)
 
-df <- merge(df, df1, by.x = "ID", by.y = "ID") #adding the demographic covariates to the daily data
+df <- merge(df, df1, by.x = "ID", by.y = "ID") #adding the demographic covariates to the daily data. Adding 2 vars to df1, essentially 
+
+df <- df |> 
+  rename(
+    PartnerKM = a_p2whatkm1,
+    FriendKM = a_p2whatkm2,
+    FamilyKM = a_p2whatkm3,
+    ColleKM = a_p2whatkm4,
+    AcquaKM = a_p2whatkm5,
+    StranKM = a_p2whatkm6,
+    AnimaKM = a_p2whatkm7,
+    NatureKM = a_p2whatkm8,
+    MusicKM = a_p2whatkm9,
+    NonFicKM = a_p2whatkm10,
+    FicKM = a_p2whatkm11,
+    OtherKM = a_p2whatkm12
+  )
 ```
 
-Diary
+```{r}
+df |> 
+  filter(OtherKM == 1)
+
+df[df$a_p2whatkm12_TEXT == "My pet Nala",]
+df$OtherKM[df$a_p2whatkm12_TEXT == "My pet Nala"] <- 0 #this person already has Animal listed, so can remove the Other here
+```
+
 
 Do we have 6 days for everyone? How many people do we even have?
 ```{r}
@@ -302,8 +326,8 @@ grid.arrange(p1,p2, nrow = 2)
 ```{r}
 dfDem |> 
   summarise(
-    RelLenM = mean(rellength, na.rm = T),
-    RelLenSD = sd(rellength, na.rm = T)
+    AgeM = mean(age, na.rm = T),
+    AgeSD = sd(age, na.rm = T)
     )
 
 ggplot(dfDem, aes(x = age)) +
@@ -397,9 +421,9 @@ dfDem |>
     )
 
 ggplot(dfDem, aes(x = rellength)) +
-  geom_histogram(binwidth = 1) +
+  geom_histogram(binwidth = 2) +
   labs(title = "Month Distribution",
-       x = "Months (Binwidth = 1)",
+       x = "Months",
        y = "Count")
 
 ggplot(dfDem, aes(x = rellength)) +
@@ -447,7 +471,265 @@ ggplot(dfDem, aes(x = Parstudy)) +
 #RQ1
 Descriptive evaluation of the elicitors and frequency of kama muta
 
+### How often? All bar+(KM>0, any scale)
+```{r}
+df |> 
+  mutate(
+    KMmark = ifelse(a_p2km1 + a_p2km2 + a_p2km3 + a_p2km4 + a_p2km5 + a_p2km6 > 0, "Potential KM", "None")
+  ) |> 
+  count(KMmark) #So 429 out of 522 (82%) days potentially had a KM event
 
+o1 <- df |> 
+  mutate(
+    KMmark = ifelse(a_p2km1 + a_p2km2 + a_p2km3 + a_p2km4 + a_p2km5 + a_p2km6 > 0, 1, 0)
+    ) |> 
+  group_by(ID) |> 
+  mutate(
+    Day = row_number()
+  ) |> 
+  select(ID, KMmark, Day)
+
+o1 <- o1 |>
+  pivot_wider(
+    names_from = Day,
+    names_prefix = "Day_",
+    values_from = KMmark
+  )
+o1$KMtot <- rowSums(o1[2:7], na.rm = T)
+o1 |> 
+  ungroup(ID) |> 
+  summarise(mean = mean(KMtot)) #note, this should be the exact same ratio as the above 82%. I.e. 4.93 days/6 is also == 82%
+```
+### How often? Low bar+ (>6, 1/4 of scale)
+The 6 KM items are 0-4, meaning maximum points is 24 
+```{r}
+df |> 
+  mutate(
+    KMmark = ifelse(a_p2km1 + a_p2km2 + a_p2km3 + a_p2km4 + a_p2km5 + a_p2km6 > 6, "Potential KM", "None")
+  ) |> 
+  count(KMmark) #So 244 out of 522 (46.7%%) days potentially had a KM event
+
+o1 <- df |> 
+  mutate(
+    KMmark = ifelse(a_p2km1 + a_p2km2 + a_p2km3 + a_p2km4 + a_p2km5 + a_p2km6 > 6, 1, 0)
+    ) |> 
+  group_by(ID) |> 
+  mutate(
+    Day = row_number()
+  ) |> 
+  select(ID, KMmark, Day)
+
+o1 <- o1 |>
+  pivot_wider(
+    names_from = Day,
+    names_prefix = "Day_",
+    values_from = KMmark
+  )
+o1$KMtot <- rowSums(o1[2:7], na.rm = T)
+o1 |> 
+  ungroup(ID) |> 
+  summarise(mean = mean(KMtot)) #note, this should be the exact same ratio as the above 46.%. I.e. 2.80 days/6 is also == 46.7%
+```
+
+### How often? M ed+ bar (>12, 1/2 of scale)
+The 6 KM items are 0-4, meaning maximum points is 24 
+```{r}
+df |> 
+  mutate(
+    KMmark = ifelse(a_p2km1 + a_p2km2 + a_p2km3 + a_p2km4 + a_p2km5 + a_p2km6 > 12, "Potential KM", "None")
+  ) |> 
+  count(KMmark) #So 78 out of 522 (14.9%) days potentially had a KM event
+
+o1 <- df |> 
+  mutate(
+    KMmark = ifelse(a_p2km1 + a_p2km2 + a_p2km3 + a_p2km4 + a_p2km5 + a_p2km6 > 12, 1, 0)
+    ) |> 
+  group_by(ID) |> 
+  mutate(
+    Day = row_number()
+  ) |> 
+  select(ID, KMmark, Day)
+
+o1 <- o1 |>
+  pivot_wider(
+    names_from = Day,
+    names_prefix = "Day_",
+    values_from = KMmark
+  )
+o1$KMtot <- rowSums(o1[2:7], na.rm = T)
+o1 |> 
+  ungroup(ID) |> 
+  summarise(mean = mean(KMtot)) #note, this should be the exact same ratio as the above 14.9%. I.e. .89 days/6 is also == 14.9%
+```
+
+### How often? high bar+ (>18, 3/4 of scale)
+The 6 KM items are 0-4, meaning maximum points is 24 
+```{r}
+df |> 
+  mutate(
+    KMmark = ifelse(a_p2km1 + a_p2km2 + a_p2km3 + a_p2km4 + a_p2km5 + a_p2km6 > 18, "Potential KM", "None")
+  ) |> 
+  count(KMmark) #So 8 out of 522 (1.5%) days potentially had a KM event
+
+o1 <- df |> 
+  mutate(
+    KMmark = ifelse(a_p2km1 + a_p2km2 + a_p2km3 + a_p2km4 + a_p2km5 + a_p2km6 > 18, 1, 0)
+    ) |> 
+  group_by(ID) |> 
+  mutate(
+    Day = row_number()
+  ) |> 
+  select(ID, KMmark, Day)
+
+o1 <- o1 |>
+  pivot_wider(
+    names_from = Day,
+    names_prefix = "Day_",
+    values_from = KMmark
+  )
+o1$KMtot <- rowSums(o1[2:7], na.rm = T)
+o1 |> 
+  ungroup(ID) |> 
+  summarise(mean = mean(KMtot)) #note, this should be the exact same ratio as the above 1.5%. I.e. .09 days/6 is also == 1.5%
+```
+
+
+### What evoked the KM?
+
+```{r}
+o1 <- df |> 
+  select(ID, PartnerKM, FriendKM, FamilyKM, ColleKM, AcquaKM, StranKM, AnimaKM, NatureKM, MusicKM, NonFicKM, FicKM, OtherKM) |> 
+  group_by(ID) |> 
+  mutate(
+    Day = row_number()
+  ) |> 
+  pivot_longer(cols = !c(ID, Day), names_to = "Evoker") |> 
+  filter(value == 1) |> 
+  group_by(ID, Day) #1318 observations of KM evokers. 522 observations total, means people were reporting on average ~2.5 evokers per day
+#Remember, people could report more than one KM evoker per each day
+
+table(o1$Evoker) #Out of all those evokers, who came up the most?
+round(prop.table(table(o1$Evoker))*100, 1)
+
+ggplot(o1, aes(x = Evoker)) +
+  geom_bar()
+```
+
+```{r}
+#Same as code above, but with added markers for KM on that day
+o1 <- df |> 
+  select(ID, PartnerKM, FriendKM, FamilyKM, ColleKM, AcquaKM, StranKM, AnimaKM, NatureKM, MusicKM, NonFicKM, FicKM, OtherKM,
+         a_p2km1, a_p2km2, a_p2km3, a_p2km4, a_p2km5 , a_p2km6) |> 
+  group_by(ID) |> 
+  mutate(
+    Day = row_number(),
+    Mark = ifelse(a_p2km1 + a_p2km2 + a_p2km3 + a_p2km4 + a_p2km5 + a_p2km6 > 0, 1, 0),
+    MarkQtr = ifelse(a_p2km1 + a_p2km2 + a_p2km3 + a_p2km4 + a_p2km5 + a_p2km6 > 6, 1, 0),
+    MarkHalf = ifelse(a_p2km1 + a_p2km2 + a_p2km3 + a_p2km4 + a_p2km5 + a_p2km6 > 12, 1, 0),
+    Mark34 = ifelse(a_p2km1 + a_p2km2 + a_p2km3 + a_p2km4 + a_p2km5 + a_p2km6 > 18, 1, 0),
+  ) |> 
+  select(ID, Day, PartnerKM, FriendKM, FamilyKM, ColleKM, AcquaKM, StranKM, AnimaKM, NatureKM, MusicKM, NonFicKM, FicKM, OtherKM,
+         Mark, MarkQtr, MarkHalf, Mark34) |> 
+  pivot_longer(cols = !c(ID, Day, Mark, MarkQtr, MarkHalf, Mark34), names_to = "Evoker") |> 
+  filter(value == 1) |> 
+  group_by(ID, Day) #1318 observations of KM evokers. 522 observations total, means people were reporting on average ~2.5 evokers per day
+#Remember, people could report more than one KM evoker per each day
+all(o1$Mark == o1$value)#This is TRUE, which is good. Each all all BARE MINIMUM (mark) KM should have an evoker (value).
+
+
+#All+ bar
+sum(table(o1$Evoker[o1$Mark == 1]))
+table(o1$Evoker[o1$Mark == 1])
+round(prop.table(table(o1$Evoker[o1$Mark == 1]))*100,1)
+
+#Low+ bar
+sum(table(o1$Evoker[o1$MarkQtr == 1]))
+table(o1$Evoker[o1$MarkQtr == 1])
+round(prop.table(table(o1$Evoker[o1$MarkQtr == 1]))*100,1)
+
+#Med+ bar
+sum(table(o1$Evoker[o1$MarkHalf == 1]))
+table(o1$Evoker[o1$MarkHalf == 1])
+round(prop.table(table(o1$Evoker[o1$MarkHalf == 1]))*100,1)
+
+#High+ bar
+sum(table(o1$Evoker[o1$Mark34 == 1]))
+table(o1$Evoker[o1$Mark34 == 1])
+round(prop.table(table(o1$Evoker[o1$Mark34 == 1]))*100,1)
+
+
+p1 <- o1 |> 
+  filter(Mark == 1) |> 
+  ggplot(aes(x = Evoker)) +
+  geom_bar() +
+  theme(axis.text.x = element_text(angle = 60, vjust = 0.5)) +
+  labs(title = "Evokers, All KM Days",
+       x = "",
+       y = "Count (n = 1318)")
+
+p2 <- o1 |> 
+  filter(MarkQtr == 1) |> 
+  ggplot(aes(x = Evoker)) +
+  geom_bar() +
+  theme(axis.text.x = element_text(angle = 60, vjust = 0.5)) +
+  labs(title = "Evokers, Low+ KM Days",
+       x = "",
+       y = "Count (n = 870)")
+
+p3 <- o1 |> 
+  filter(MarkHalf == 1) |> 
+  ggplot(aes(x = Evoker)) +
+  geom_bar() +
+  theme(axis.text.x = element_text(angle = 60, vjust = 0.5)) +
+  labs(title = "Evokers, Med+ KM Days",
+       x = "",
+       y = "Count (n = 292)") 
+
+p4 <- o1 |> 
+  filter(Mark34 == 1) |> 
+  ggplot(aes(x = Evoker)) +
+  geom_bar() +
+  theme(axis.text.x = element_text(angle = 60, vjust = 0.5)) +
+  labs(title = "Evokers, High+ KM Days",
+       x = "",
+       y = "Count (n = 33)") 
+
+grid.arrange(p1,p2, p3,p4, nrow = 2)
+
+
+o1 |> 
+  mutate(
+    MarkTotal = "Mark",
+    MarkTotal = ifelse(MarkQtr == 1, "Qtr", MarkTotal),
+    MarkTotal = ifelse(MarkHalf == 1, "Half", MarkTotal),
+    MarkTotal = ifelse(Mark34 == 1, "ThreeQtr", MarkTotal),
+    ) |> 
+  ggplot(aes(Evoker, fill = MarkTotal)) +
+  geom_bar(position = "stack") +
+  theme(axis.text.x = element_text(angle = 60, vjust = 0.5)) +
+  labs(title = "Evokers",
+       x = "",
+       y = "Count")
+
+
+o1 |> 
+  mutate(
+    MarkTotal = "Mark",
+    MarkTotal = ifelse(MarkQtr == 1, "Qtr", MarkTotal),
+    MarkTotal = ifelse(MarkHalf == 1, "Half", MarkTotal),
+    MarkTotal = ifelse(Mark34 == 1, "ThreeQtr", MarkTotal),
+    MarkTotal = factor(MarkTotal, levels = c("Mark", "Qtr", "Half", "ThreeQtr"))
+    ) |> 
+  ggplot(aes(MarkTotal, fill = Evoker)) +
+  geom_bar(position = "fill") +
+  theme(axis.text.x = element_text(angle = 60, vjust = 0.5)) +
+  labs(title = "Evokers",
+       x = "KM Days",
+       y = "Percentage")
+```
+Two things I'm learning here.
+A) Partners are by far the most common elicitor of KM feels. This is definitely on track for what we'd expect.
+B) Km evokers are pretty social (Partner, next fam & friends)...then **music** all of a sudden pops. That's cool!
 
 #### Site comparison
 Will probably have to do some basic t-tests/barplots/violin plots here for some comparison between sites of KM and PPR
