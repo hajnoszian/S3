@@ -112,7 +112,11 @@ df0 <-
                         "6" = "Married"),
        Parstudy = recode(factor(Parstudy),
                          "1" = "No",
-                         "2" = "Yes")
+                         "2" = "Yes"),
+       Institution = recode(factor(Institution),
+                            "1" = "University of Edinburgh",
+                            "2" = "Trinity University",
+                            "3" = "Southwestern University")
        )
 df0$ethn[df0$ethn_TEXT == "Mixed White and east Asian (but happy to be grouped in mixed)"] <- "MixedMultipleEthnicGroups"
 ```
@@ -120,7 +124,7 @@ df0$ethn[df0$ethn_TEXT == "Mixed White and east Asian (but happy to be grouped i
 ```{r}
 #For the merge of the baseline and daily, I only need a few vars from the baseline to show up. This will be a large, wide dataset eventually so may as well start making it cleaner here and take just want I need
 df <- df0 |> 
-  select(ID, gend, rellength)
+  select(ID, gend, rellength, Institution)
 
 df <- merge(df, df1, by.x = "ID", by.y = "ID") #adding the demographic covariates to the daily data. Adding 2 vars to df1, essentially 
 
@@ -172,135 +176,6 @@ dfDem <- merge(df0, o1) #this should have the 87 folks from the final df, but in
 
 dfDem$ID == unique(df$ID) #they're the same IDs! Woo!
 ```
-##### Scaffolding Plotting Code
-
-Histogram (dummy code)
-```{r}
-nrow(df) # = 352
-#Age
-p1 <- ggplot(df, aes(x = Age)) +
-  geom_histogram(binwidth = 1) +
-  labs(title = "Age Distribution (n=352)",
-       x = "Age (Binwidth = 1)",
-       y = "Count")
-#Race
-p2 <- ggplot(df, aes(x = Race)) +
-  geom_bar() +
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
-  labs(title = "Ethnicity/Race Distribution (n=352)",
-       y = "Count")
-
-grid.arrange(p1,p2, nrow = 1)
-```
-
-Density (dummy code)
-```{r}
-p1 <- ggplot(df, aes(KM_P, group = Cond, fill = Cond)) +
-  geom_density(alpha = 0.6) +
-  scale_fill_viridis(discrete=TRUE, name = "Condition")+
-  labs(x = "Physiological Signs",
-       y = "Density")
-
-p2 <- ggplot(df, aes(KM_CSR, group = Cond, fill = Cond)) +
-  geom_density(alpha = 0.6) +
-  scale_fill_viridis(discrete=TRUE, name = "Condition")+
-  labs(x = "CSR Appraisal",
-       y = "Density")
-
-p3 <- ggplot(df, aes(KM_M, group = Cond, fill = Cond)) +
-  geom_density(alpha = 0.6) +
-  scale_fill_viridis(discrete=TRUE, name = "Condition")+
-  labs(x = "Prosocial Motivation",
-       y = "Density")
-
-p4 <- ggplot(df, aes(KM_L, group = Cond, fill = Cond)) +
-  geom_density(alpha = 0.6) +
-  scale_fill_viridis(discrete=TRUE, name = "Condition")+
-  labs(x = "Lexical Label",
-       y = "Density")
-
-grid.arrange(p1,p2,p3,p4, nrow = 2)
-```
-
-Violin (dummy code)
-```{r}
-p1 <- ggplot(df, aes(Cond, ANS_1, fill = Cond)) +
-  geom_violin() +
-  geom_boxplot(width = 0.1, color = "black", alpha = 0.4) +
-  scale_fill_viridis(discrete=TRUE, name = "Condition")+
-  labs(title = "Time 1 Autonomy Satisfaction",
-       x = "",
-       y = "")
-
-p2 <- ggplot(df, aes(Cond, ANF_1, fill = Cond)) +
-  geom_violin() +
-  geom_boxplot(width = 0.1, color = "black", alpha = 0.4) +
-  scale_fill_viridis(discrete=TRUE, name = "Condition")+
-  labs(title = "Time 1 Autonomy Frustration",
-       x = "",
-       y = "")
-p3 <- ggplot(df, aes(Cond, RNS_1, fill = Cond)) +
-  geom_violin() +
-  geom_boxplot(width = 0.1, color = "black", alpha = 0.4) +
-  scale_fill_viridis(discrete=TRUE, name = "Condition")+
-  labs(title = "Time 1 Relatedness Satisfaction",
-       x = "",
-       y = "")
-
-p4 <- ggplot(df, aes(Cond, RNF_1, fill = Cond)) +
-  geom_violin() +
-  geom_boxplot(width = 0.1, color = "black", alpha = 0.4) +
-  scale_fill_viridis(discrete=TRUE, name = "Condition")+
-  labs(title = "Time 1 Relatedness Frustration",
-       x = "",
-       y = "")
-p5 <- ggplot(df, aes(Cond, CNS_1, fill = Cond)) +
-  geom_violin() +
-  geom_boxplot(width = 0.1, color = "black", alpha = 0.4) +
-  scale_fill_viridis(discrete=TRUE, name = "Condition")+
-  labs(title = "Time 1 Competence Satisfaction",
-       x = "",
-       y = "")
-p6 <- ggplot(df, aes(Cond, CNF_1, fill = Cond)) +
-  geom_violin() +
-  geom_boxplot(width = 0.1, color = "black", alpha = 0.4) +
-  scale_fill_viridis(discrete=TRUE, name = "Condition")+
-  labs(title = "Time 1 Competence Frustration",
-       x = "",
-       y = "")
-
-grid.arrange(p1,p2,p3,p4,p5,p6, nrow = 3)
-ggsave("Time 1 By Condition.png")
-```
-
-
-Boxplot (dummy code)
-```{r}
-df_plot <- df %>% 
-  select("Cond", "ANS_1", "ANS_2") %>% 
-  pivot_longer(cols = c("ANS_1", "ANS_2"),
-               names_to = "Time",
-               values_to = "Score")
-
-p1 <- ggplot(df_plot, aes(x = Time, y = Score, fill = Cond)) +
-  geom_boxplot() +
-  scale_fill_viridis(discrete=TRUE, name = "Condition")+
-  labs(y = "Score")
-
-df_plot <- df %>% 
-  select("Cond", "ANF_1", "ANF_2") %>% 
-  pivot_longer(cols = c("ANF_1", "ANF_2"),
-               names_to = "Time",
-               values_to = "Score")
-
-p2 <- ggplot(df_plot, aes(x = Time, y = Score, fill = Cond)) +
-  geom_boxplot() +
-  scale_fill_viridis(discrete=TRUE, name = "Condition")+
-  labs(y = "Score")
-
-grid.arrange(p1, p2, nrow = 1)
-```
-
 #### Gender & Trans
 ```{r}
 prop.table(table(dfDem$gend))*100
@@ -531,7 +406,7 @@ o1 |>
   summarise(mean = mean(KMtot)) #note, this should be the exact same ratio as the above 46.%. I.e. 2.80 days/6 is also == 46.7%
 ```
 
-### How often? M ed+ bar (>12, 1/2 of scale)
+### How often? Med+ bar (>12, 1/2 of scale)
 The 6 KM items are 0-4, meaning maximum points is 24 
 ```{r}
 df |> 
@@ -736,7 +611,7 @@ Two things I'm learning here.
 A) Partners are by far the most common elicitor of KM feels. This is definitely on track for what we'd expect.
 B) Km evokers are pretty social (Partner, next fam & friends)...then **music** all of a sudden pops. That's cool!
 
-#### Site comparison
+# Site comparison
 Will probably have to do some basic t-tests/barplots/violin plots here for some comparison between sites of KM and PPR
 
 
@@ -744,7 +619,35 @@ Will probably have to do some basic t-tests/barplots/violin plots here for some 
 ## Reworking to Wide format
 Will need to rework the dataset to be wide format here:
 ```{r}
+df$pprMean <- rowMeans(subset(df, select = c(a_p2ppr1,a_p2ppr2, a_p2ppr3, a_p2ppr4)), na.rm = T) #need the rowMeans() call since mean() can't handle a row entirely of NAs, like we have every now and then
+df$kmMean <- rowMeans(subset(df, select = c(a_p2km1,a_p2km2, a_p2km3, a_p2km4, a_p2km5, a_p2km6)), na.rm = T)
+df$paMean <- rowMeans(subset(df, select = c(a_p2pa1,a_p2pa2, a_p2pa3, a_p2pa4, a_p2pa5)), na.rm = T)
 
+#PPR
+summary(lm(data = df,
+   pprMean ~ Institution)) #no differences to note
+
+ggplot(data = df, aes(x = Institution, y = pprMean)) +
+  geom_boxplot() #none to note here
+
+#KM
+summary(lm(data = df,
+   kmMean ~ Institution)) #Trinity seems to be a bit higher, than Edi at least
+
+ggplot(data = df, aes(x = Institution, y = kmMean)) + #appears Trinity is higher generally
+  geom_boxplot()
+
+#PA
+summary(lm(data = df,
+   paMean ~ Institution))#no differences
+ggplot(data = df, aes(x = Institution, y = paMean)) +
+  geom_boxplot()#no differences
+
+#Rel Sat
+summary(lm(data = df,
+           a_p2relsat ~ Institution)) #Southwestern is a tad higher it seems
+ggplot(data = df, aes(x = Institution, y = a_p2relsat)) +
+  geom_boxplot()#seems largely influences by tails of Edi, rather than something notable to Southwestern
 ```
 
 
