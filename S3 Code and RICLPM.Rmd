@@ -357,6 +357,44 @@ ggplot(dfDem, aes(x = Parstudy)) +
 ### Necessary?
 
 ##### Attachment (Baseline)
+How anxious is this largely white, women, student, heterosexual sample?
+```{r}
+dfDem |> 
+  summarise(
+    AnxU = mean(anxtot, na.rm = T),
+    AnxSd = sd(anxtot),
+    AvoU = mean(avotot, na.rm = T),
+    AvdoSd = sd(avotot)
+  )
+
+p1 <- ggplot(dfDem, aes(x = anxtot)) +
+  geom_histogram() +
+  labs(title = "Anxious Attachment Histogram",
+       x = "",
+       y = "Count")
+
+p2 <- ggplot(dfDem, aes(x = anxtot)) +
+  geom_density() +
+  labs(title = "Anxious Attachment Density Distribution",
+       x = "",
+       y = "Density")
+
+p3 <- ggplot(dfDem, aes(x = avotot)) +
+  geom_histogram() +
+  labs(title = "Avoidant Attachment Histogram",
+       x = "",
+       y = "Count")
+
+p4 <- ggplot(dfDem, aes(x = avotot)) +
+  geom_density() +
+  labs(title = "Avoidant Attachment Density Distribution",
+       x = "",
+       y = "Density")
+
+grid.arrange(p1,p2,p3, p4, nrow = 2)
+
+```
+
 
 ##### PRI (Baseline)
 
@@ -523,6 +561,13 @@ o1$KMtot <- rowSums(o1[2:7], na.rm = T)
 o1 |> 
   ungroup(ID) |> 
   summarise(mean = mean(KMtot)) #note, this should be the exact same ratio as the above 81%. I.e. 4.85 days/6 is also == 81%
+
+ggplot(o1, aes(x = KMtot)) +
+  geom_bar() +
+  geom_vline(xintercept = mean(o1$KMtot), color = "red", linetype = "longdash") +
+  labs(title = "All KM Days",
+       x = "Number of Days Meeting >0 of Total Scale Threshold",
+       y = "Number of People")
 ```
 
 #### Sans KM2 KM3, How often? Low bar+ (>4, 1/4 of scale)
@@ -554,6 +599,13 @@ o1$KMtot <- rowSums(o1[2:7], na.rm = T)
 o1 |> 
   ungroup(ID) |> 
   summarise(mean = mean(KMtot)) #note, this should be the exact same ratio as the above 46.%. I.e. 3.23 days/6 is also == 53.8%
+
+ggplot(o1, aes(x = KMtot)) +
+  geom_bar() +
+  geom_vline(xintercept = mean(o1$KMtot), color = "red", linetype = "longdash") +
+  labs(title = "Qtr+ KM Days",
+       x = "Number of Days Meeting 1/4 of Total Scale Threshold",
+       y = "Number of People")
 ```
 
 #### Sans KM2 KM3, How often? Med+ bar (>8, 1/2 of scale)
@@ -585,6 +637,13 @@ o1$KMtot <- rowSums(o1[2:7], na.rm = T)
 o1 |> 
   ungroup(ID) |> 
   summarise(mean = mean(KMtot)) #note, this should be the exact same ratio as the above 28.5%. I.e. 1.7 days/6 is also == 28.5%
+
+ggplot(o1, aes(x = KMtot)) +
+  geom_bar() +
+  geom_vline(xintercept = mean(o1$KMtot), color = "red", linetype = "longdash") +
+  labs(title = "Halfs+ KM Days",
+       x = "Number of Days Meeting 1/2 of Total Scale Threshold",
+       y = "Number of People")
 ```
 
 #### Sans KM2 KM3, How often? high bar+ (>12, 3/4 of scale)
@@ -616,8 +675,15 @@ o1$KMtot <- rowSums(o1[2:7], na.rm = T)
 o1 |> 
   ungroup(ID) |> 
   summarise(mean = mean(KMtot)) #note, this should be the exact same ratio as the above 9.7%. I.e. .10 days/6 is also == 9.7%
-```
 
+
+ggplot(o1, aes(x = KMtot)) +
+  geom_bar() +
+  geom_vline(xintercept = mean(o1$KMtot), color = "red", linetype = "longdash") +
+  labs(title = "Three Quarters+ KM Days",
+       x = "Number of Days Meeting 3/4 of Total Scale Threshold",
+       y = "Number of People")
+```
 
 ### What evoked the KM?
 
@@ -778,7 +844,7 @@ o1 <- df |>
   filter(value == 1) |> 
   group_by(ID, Day) #1318 observations of KM evokers. 522 observations total, means people were reporting on average ~2.5 evokers per day
 #Remember, people could report more than one KM evoker per each day
-all(o1$Mark == o1$value)#This is false, which is to be expected since I've cut 2 KM items and thus 2 opportunities for an evoker. Makes it a bit more complicated, which is one argument to use the above plotting since they are 100% linked together. 
+all(o1$Mark == o1$value)#This is false, which is to be expected since I've cut 2 KM items and thus 2 opportunities for an evoker (those categories are marked SEPARATELY from the KM items themselves, hence we still have opportunity for bleed in from km2 and km3). Makes it a bit more complicated, which is one argument to use the above plotting since they are 100% linked together. 
 
 
 #All+ bar
@@ -927,6 +993,7 @@ p3<- ggplot(data = df, aes(x = day, y = ppr3, group = day)) +
 p4<- ggplot(data = df, aes(x = day, y = ppr4, group = day)) +
   geom_boxplot(alpha = .5) +
   stat_summary(fun.y = "mean")
+
 
 grid.arrange(p1,p2, p3,p4, nrow = 2)
 ```
@@ -1574,7 +1641,10 @@ baseMeasurment.m4.fit <- cfa(baseMeasurment.m4,
                    ) #dont really need the bootstrap, since we don't care about indirect effects.
 summary(baseMeasurment.m4.fit, fit.measures = T, standardized =T, ci = T)
 ```
-Yeah, even the most generous, basic CFA PPR measurement model looks funky here. It's not doing great by itself. Arguably, ppr4 is not doing great relative to the others but it's still looking pretty good tbh.
+
+
+Yeah, even the most generous, basic CFA PPR measurement model looks funky here. It's not doing great by itself. Arguably, ppr4 is 
+not doing great relative to the others but it's still looking pretty good tbh.
 
 
 
@@ -1609,6 +1679,92 @@ baseMeasurment.m5.fit <- cfa(baseMeasurment.m5,
 summary(baseMeasurment.m5.fit, fit.measures = T, standardized =T, ci = T)
 ```
 surprisingly, not that bad by itself actually!
+
+##### PPR & KM measurement model re-test
+
+Together, but without the RIs and within pieces--literally just the factors (similar to measurement model 2, but without the other parameters)
+```{r}
+baseMeasurment.m6 <- '
+
+  #####################
+  # MEASUREMENT MODEL #
+  #####################
+  
+  # Factor models for km at 6 waves (UNconstrained)
+  Fkm1 =~ km1_t1 + km4_t1 + km5_t1 + km6_t1
+  Fkm2 =~ km1_t2 + km4_t2 + km5_t2 + km6_t2
+  Fkm3 =~ km1_t3 + km4_t3 + km5_t3 + km6_t3
+  Fkm4 =~ km1_t4 + km4_t4 + km5_t4 + km6_t4
+  Fkm5 =~ km1_t5 + km4_t5 + km5_t5 + km6_t5
+  Fkm6 =~ km1_t6 + km4_t6 + km5_t6 + km6_t6
+  
+  # Factor models for ppr at 6 waves (UNconstrained)
+  Fppr1 =~ ppr1_t1 + ppr2_t1 + ppr3_t1 + ppr4_t1
+  Fppr2 =~ ppr1_t2 + ppr2_t2 + ppr3_t2 + ppr4_t2
+  Fppr3 =~ ppr1_t3 + ppr2_t3 + ppr3_t3 + ppr4_t3
+  Fppr4 =~ ppr1_t4 + ppr2_t4 + ppr3_t4 + ppr4_t4
+  Fppr5 =~ ppr1_t5 + ppr2_t5 + ppr3_t5 + ppr4_t5
+  Fppr6 =~ ppr1_t6 + ppr2_t6 + ppr3_t6 + ppr4_t6
+  
+
+'
+
+
+
+baseMeasurment.m6.fit <- cfa(baseMeasurment.m6,
+                   data = dfSEM,
+                   missing = "ML",
+                   #em.iter.max = 20000, #default is 10,000 but we're getting some convergence warnings, so maybe try out later
+                   std.lv = T#, #scales the latent variables to 1, rather than relying on first item scaling
+                   #se = 'bootstrap'
+                   ) #dont really need the bootstrap, since we don't care about indirect effects.
+summary(baseMeasurment.m6.fit, fit.measures = T, standardized =T, ci = T)
+
+```
+```{r}
+modindices(baseMeasurment.m6.fit, sort = T)
+```
+
+Fixing the item loadings (basically weak invariance)
+```{r}
+
+baseMeasurment.m7 <- '
+
+  #####################
+  # MEASUREMENT MODEL #
+  #####################
+  
+  # Factor models for km at 6 waves (UNconstrained)
+  Fkm1 =~ a*km1_t1 + b*km4_t1 + c*km5_t1 + d*km6_t1
+  Fkm2 =~ a*km1_t2 + b*km4_t2 + c*km5_t2 + d*km6_t2
+  Fkm3 =~ a*km1_t3 + b*km4_t3 + c*km5_t3 + d*km6_t3
+  Fkm4 =~ a*km1_t4 + b*km4_t4 + c*km5_t4 + d*km6_t4
+  Fkm5 =~ a*km1_t5 + b*km4_t5 + c*km5_t5 + d*km6_t5
+  Fkm6 =~ a*km1_t6 + b*km4_t6 + c*km5_t6 + d*km6_t6
+  
+  # Factor models for ppr at 6 waves (UNconstrained)
+  Fppr1 =~ e*ppr1_t1 + f*ppr2_t1 + g*ppr3_t1 + h*ppr4_t1
+  Fppr2 =~ e*ppr1_t2 + f*ppr2_t2 + g*ppr3_t2 + h*ppr4_t2
+  Fppr3 =~ e*ppr1_t3 + f*ppr2_t3 + g*ppr3_t3 + h*ppr4_t3
+  Fppr4 =~ e*ppr1_t4 + f*ppr2_t4 + g*ppr3_t4 + h*ppr4_t4
+  Fppr5 =~ e*ppr1_t5 + f*ppr2_t5 + g*ppr3_t5 + h*ppr4_t5
+  Fppr6 =~ e*ppr1_t6 + f*ppr2_t6 + g*ppr3_t6 + h*ppr4_t6
+  
+
+'
+
+
+
+baseMeasurment.m7.fit <- cfa(baseMeasurment.m7,
+                   data = dfSEM,
+                   missing = "ML",
+                   #em.iter.max = 20000, #default is 10,000 but we're getting some convergence warnings, so maybe try out later
+                   std.lv = T#, #scales the latent variables to 1, rather than relying on first item scaling
+                   #se = 'bootstrap'
+                   ) #dont really need the bootstrap, since we don't care about indirect effects.
+summary(baseMeasurment.m7.fit, fit.measures = T, standardized =T, ci = T)
+
+```
 
 
 Ok, so we have a KM and PPR measurement model that are individually less than stellar, together not good. More evidence that km2 and km3 are not great measures for the construct. Does it get better if we remove those?
@@ -1889,7 +2045,7 @@ strong.m1 <- '
   
   
   # Free latent means from t=2 onward (only do this in combination with constraints on intercepts, above)
-  Fkm2 + Fkm3 + Fkm4 + Fkm5 + Fkm6 + Fppr1 + Fppr2 + Fppr3 + Fppr4 + Fppr5 + Fppr6 ~ 1
+  Fkm2 + Fkm3 + Fkm4 + Fkm5 + Fkm6 + Fppr2 + Fppr3 + Fppr4 + Fppr5 + Fppr6 ~ 1
   
   ################
   # BETWEEN PART #
@@ -1979,6 +2135,121 @@ Strong invariance holds by this test!! That's cool actually.
 So our model is getting better the braver we get in specifying restrictions on the base model. But it looks like we can't quite surpass the limitations inherent in the measurement model being a bit funky (see earlier measurement models that show that the KM and PPR cfa is just not robust enough on its own).
 The structure seems like it holds up decently, but it's the measurement model atm that ruins this show.
 
+
+
+```{r}
+strong.m2 <- '
+
+  #####################
+  # MEASUREMENT MODEL #
+  #####################
+  
+  # Factor models for km at 6 waves (Constrained)
+  Fkm1 =~ a*km1_t1 + d*km4_t1 + e*km5_t1 + f*km6_t1
+  Fkm2 =~ a*km1_t2 + d*km4_t2 + e*km5_t2 + f*km6_t2
+  Fkm3 =~ a*km1_t3 + d*km4_t3 + e*km5_t3 + f*km6_t3
+  Fkm4 =~ a*km1_t4 + d*km4_t4 + e*km5_t4 + f*km6_t4
+  Fkm5 =~ a*km1_t5 + d*km4_t5 + e*km5_t5 + f*km6_t5
+  Fkm6 =~ a*km1_t6 + d*km4_t6 + e*km5_t6 + f*km6_t6
+  
+  # Factor models for ppr at 6 waves (Constrained)
+  Fppr1 =~ g*ppr1_t1 + h*ppr2_t1 + i*ppr3_t1 + j*ppr4_t1
+  Fppr2 =~ g*ppr1_t2 + h*ppr2_t2 + i*ppr3_t2 + j*ppr4_t2
+  Fppr3 =~ g*ppr1_t3 + h*ppr2_t3 + i*ppr3_t3 + j*ppr4_t3
+  Fppr4 =~ g*ppr1_t4 + h*ppr2_t4 + i*ppr3_t4 + j*ppr4_t4
+  Fppr5 =~ g*ppr1_t5 + h*ppr2_t5 + i*ppr3_t5 + j*ppr4_t5
+  Fppr6 =~ g*ppr1_t6 + h*ppr2_t6 + i*ppr3_t6 + j*ppr4_t6
+  
+  # Constrained intercepts over time (Strong invariance)
+  km1_t1 + km1_t2 + km1_t3 + km1_t4 + km1_t5 + km1_t6 ~ k*1
+  km4_t1 + km4_t2 + km4_t3 + km4_t4 + km4_t5 + km4_t6 ~ l*1
+  km5_t1 + km5_t2 + km5_t3 + km5_t4 + km5_t5 + km5_t6 ~ m*1
+  km6_t1 + km6_t2 + km6_t3 + km6_t4 + km6_t5 + km6_t6 ~ n*1
+  
+  ppr1_t1 + ppr1_t2 + ppr1_t3 + ppr1_t4 + ppr1_t5 + ppr1_t6 ~ o*1
+  ppr2_t1 + ppr2_t2 + ppr2_t3 + ppr2_t4 + ppr2_t5 + ppr2_t6 ~ p*1
+  ppr3_t1 + ppr3_t2 + ppr3_t3 + ppr3_t4 + ppr3_t5 + ppr3_t6 ~ q*1
+  ppr4_t1 + ppr4_t2 + ppr4_t3 + ppr4_t4 + ppr4_t5 + ppr4_t6 ~ r*1
+  
+  
+  # Free latent means from t=2 onward (only do this in combination with constraints on intercepts, above)
+  Fkm2 + Fkm3 + Fkm4 + Fkm5 + Fkm6 + Fppr1 + Fppr2 + Fppr3 + Fppr4 + Fppr5 + Fppr6 ~ 1
+  
+  ################
+  # BETWEEN PART #
+  ################
+  
+  # Create between factors (RIs)
+  RIkm =~ 1*Fkm1 + 1*Fkm2 + 1*Fkm3 + 1*Fkm4 + 1*Fkm5 + 1*Fkm6
+  RIppr =~ 1*Fppr1 + 1*Fppr2 + 1*Fppr3 + 1*Fppr4 + 1*Fppr5 + 1*Fppr6
+  
+  # Set residual variances of all Fkm and Fppr vars to 0
+  # I think this specifies all variance of the factors goes to either w/n or b/n
+  Fkm1 ~~ 0*Fkm1
+  Fkm2 ~~ 0*Fkm2
+  Fkm3 ~~ 0*Fkm3
+  Fkm4 ~~ 0*Fkm4
+  Fkm5 ~~ 0*Fkm5
+  Fkm6 ~~ 0*Fkm6
+  Fppr1 ~~ 0*Fppr1
+  Fppr2 ~~ 0*Fppr2
+  Fppr3 ~~ 0*Fppr3
+  Fppr4 ~~ 0*Fppr4
+  Fppr5 ~~ 0*Fppr5
+  Fppr6 ~~ 0*Fppr6
+
+  ###############
+  # WITHIN PART #
+  ###############
+
+  # Create within-components
+  WFkm1 =~ 1*Fkm1
+  WFkm2 =~ 1*Fkm2
+  WFkm3 =~ 1*Fkm3
+  WFkm4 =~ 1*Fkm4
+  WFkm5 =~ 1*Fkm5
+  WFkm6 =~ 1*Fkm6
+  
+  WFppr1 =~ 1*Fppr1
+  WFppr2 =~ 1*Fppr2
+  WFppr3 =~ 1*Fppr3
+  WFppr4 =~ 1*Fppr4
+  WFppr5 =~ 1*Fppr5
+  WFppr6 =~ 1*Fppr6
+  
+  # Specify lagged effects between within-person centered latent variables
+  WFkm2 + WFppr2 ~ WFkm1 + WFppr1
+  WFkm3 + WFppr3 ~ WFkm2 + WFppr2
+  WFkm4 + WFppr4 ~ WFkm3 + WFppr3
+  WFkm5 + WFppr5 ~ WFkm4 + WFppr4
+  WFkm6 + WFppr6 ~ WFkm5 + WFppr5
+  
+  # Estimate correlations within same wave
+  WFkm1 ~~ WFppr1 #I am pretty sure they missed this line in the og tutorial
+  WFkm2 ~~ WFppr2
+  WFkm3 ~~ WFppr3
+  WFkm4 ~~ WFppr4
+  WFkm5 ~~ WFppr5
+  WFkm6 ~~ WFppr6
+  
+  ##########################
+  # ADDITIONAL CONSTRAINTS #
+  ##########################
+  
+  # Set correlations between between-factors (RIs) and within-factors at wave 1 at 0
+  RIkm + RIppr ~~ 0*WFkm1 + 0*WFppr1
+  
+'
+
+
+strong.m2.fit <- cfa(strong.m2,
+                   data = dfSEM,
+                   std.lv = T,
+                   missing = "ML",
+                   em.iter.max = 20000
+                   )
+summary(strong.m2.fit,fit.measures = T, standardized =T, ci = T)
+```
 
 
 #### Configural W/Demographic Covariate
@@ -2214,8 +2485,8 @@ base.m2D <- '
   ################
   
   # Create between factors (RIs)
-  RIkm =~ 1*Fkm1 + 1*Fkm2 + 1*Fkm3 + 1*Fkm4 + 1*Fkm5 + 1*Fkm6 + gend + rellength
-  RIppr =~ 1*Fppr1 + 1*Fppr2 + 1*Fppr3 + 1*Fppr4 + 1*Fppr5 + 1*Fppr6 + gend + rellength
+  RIkm =~ 1*Fkm1 + 1*Fkm2 + 1*Fkm3 + 1*Fkm4 + 1*Fkm5 + 1*Fkm6 + Man + Woman + GendQueer + Genderless + rellength
+  RIppr =~ 1*Fppr1 + 1*Fppr2 + 1*Fppr3 + 1*Fppr4 + 1*Fppr5 + 1*Fppr6 + Man + Woman + GendQueer + Genderless + rellength
   
   # Set residual variances of all Fkm and Fppr vars to 0
   # I think this specifies all variance of the factors goes to either w/n or b/n
@@ -2276,13 +2547,14 @@ base.m2D <- '
 '
 
 
-base.m2.fit <- cfa(base.m2,
-                   data = data,
+base.m2D.fit <- cfa(base.m2D,
+                   data = dfSEM,
                    missing = "ML"
                    )
-summary(base.m2.fit)
+summary(base.m2D.fit)
 ```
 
+This really doesn't seem to want to come together
 
 ### Effects Invariance
 
@@ -2323,7 +2595,7 @@ strongInvar.m1 <- '
   
   
   # Free latent means from t=2 onward (only do this in combination with constraints on intercepts, above)
-  Fkm2 + Fkm3 + Fkm4 + Fkm5 + Fkm6 + Fppr1 + Fppr2 + Fppr3 + Fppr4 + Fppr5 + Fppr6 ~ 1
+  Fkm2 + Fkm3 + Fkm4 + Fkm5 + Fkm6 + Fppr2 + Fppr3 + Fppr4 + Fppr5 + Fppr6 ~ 1
   
   ################
   # BETWEEN PART #
@@ -2677,20 +2949,306 @@ PAweak.m1 <- '
 '
 
 
-PA.m1.fit <- cfa(PA.m1,
+PAweak.m1.fit <- cfa(PAweak.m1,
                    data = dfSEM,
                    missing = "ML",
                    #em.iter.max = 20000, #default is 10,000 but we're getting some convergence warnings, so maybe try out later
                    std.lv = T#, #scales the latent variables to 1, rather than relying on first item scaling
                    #se = 'bootstrap'
                    ) #dont really need the bootstrap, since we don't care about indirect effects.
-summary(PA.m1.fit, fit.measures = T, standardized =T, ci = T)
+summary(PAweak.m1.fit, fit.measures = T, standardized =T, ci = T)
 
 ```
 
 #### Strong
+not even worth doing--the weak model is really really bad. RMSEA .21, CFI and TLI don't even make it to double digits
 
 ## Covariate RelSat Model
+
+```{r}
+relsat.m1 <- '
+
+  #####################
+  # MEASUREMENT MODEL #
+  #####################
+  
+  # Factor models for km at 6 waves (UNconstrained)
+  Fkm1 =~ km1_t1 + km4_t1 + km5_t1 + km6_t1
+  Fkm2 =~ km1_t2 + km4_t2 + km5_t2 + km6_t2
+  Fkm3 =~ km1_t3 + km4_t3 + km5_t3 + km6_t3
+  Fkm4 =~ km1_t4 + km4_t4 + km5_t4 + km6_t4
+  Fkm5 =~ km1_t5 + km4_t5 + km5_t5 + km6_t5
+  Fkm6 =~ km1_t6 + km4_t6 + km5_t6 + km6_t6
+  
+  # Factor models for ppr at 6 waves (UNconstrained)
+  Fppr1 =~ ppr1_t1 + ppr2_t1 + ppr3_t1 + ppr4_t1
+  Fppr2 =~ ppr1_t2 + ppr2_t2 + ppr3_t2 + ppr4_t2
+  Fppr3 =~ ppr1_t3 + ppr2_t3 + ppr3_t3 + ppr4_t3
+  Fppr4 =~ ppr1_t4 + ppr2_t4 + ppr3_t4 + ppr4_t4
+  Fppr5 =~ ppr1_t5 + ppr2_t5 + ppr3_t5 + ppr4_t5
+  Fppr6 =~ ppr1_t6 + ppr2_t6 + ppr3_t6 + ppr4_t6
+  
+  # Factor models for PA at 6 waves (UNconstrained)
+  Frelsat1 =~ relsat_t1
+  Frelsat2 =~ relsat_t2
+  Frelsat3 =~ relsat_t3
+  Frelsat4 =~ relsat_t4
+  Frelsat5 =~ relsat_t5
+  Frelsat6 =~ relsat_t6
+  
+  ################
+  # BETWEEN PART #
+  ################
+  
+  # Create between factors (RIs)
+  RIkm =~ 1*Fkm1 + 1*Fkm2 + 1*Fkm3 + 1*Fkm4 + 1*Fkm5 + 1*Fkm6
+  RIppr =~ 1*Fppr1 + 1*Fppr2 + 1*Fppr3 + 1*Fppr4 + 1*Fppr5 + 1*Fppr6
+  RIrelsat =~ 1*Frelsat1 + 1*Frelsat2 + 1*Frelsat3 + 1*Frelsat4 + 1*Frelsat5 + 1*Frelsat6
+  
+  # Set residual variances of all Fkm and Fppr vars to 0
+  # I think this specifies all variance of the factors goes to either w/n or b/n
+  Fkm1 ~~ 0*Fkm1
+  Fkm2 ~~ 0*Fkm2
+  Fkm3 ~~ 0*Fkm3
+  Fkm4 ~~ 0*Fkm4
+  Fkm5 ~~ 0*Fkm5
+  Fkm6 ~~ 0*Fkm6
+  Fppr1 ~~ 0*Fppr1
+  Fppr2 ~~ 0*Fppr2
+  Fppr3 ~~ 0*Fppr3
+  Fppr4 ~~ 0*Fppr4
+  Fppr5 ~~ 0*Fppr5
+  Fppr6 ~~ 0*Fppr6
+  Frelsat1 ~~ 0*Frelsat1
+  Frelsat2 ~~ 0*Frelsat2
+  Frelsat3 ~~ 0*Frelsat3
+  Frelsat4 ~~ 0*Frelsat4
+  Frelsat5 ~~ 0*Frelsat5
+  Frelsat6 ~~ 0*Frelsat6
+  
+
+  ###############
+  # WITHIN PART #
+  ###############
+
+  # Create within-components
+  WFkm1 =~ 1*Fkm1
+  WFkm2 =~ 1*Fkm2
+  WFkm3 =~ 1*Fkm3
+  WFkm4 =~ 1*Fkm4
+  WFkm5 =~ 1*Fkm5
+  WFkm6 =~ 1*Fkm6
+  
+  WFppr1 =~ 1*Fppr1
+  WFppr2 =~ 1*Fppr2
+  WFppr3 =~ 1*Fppr3
+  WFppr4 =~ 1*Fppr4
+  WFppr5 =~ 1*Fppr5
+  WFppr6 =~ 1*Fppr6
+  
+  WFrelsat1 =~ 1*Frelsat1
+  WFrelsat2 =~ 1*Frelsat2
+  WFrelsat3 =~ 1*Frelsat3
+  WFrelsat4 =~ 1*Frelsat4
+  WFrelsat5 =~ 1*Frelsat5
+  WFrelsat6 =~ 1*Frelsat6
+  
+  # Specify lagged effects between within-person centered latent variables
+  WFkm2 + WFppr2 + WFrelsat2 ~ WFkm1 + WFppr1 + WFrelsat1
+  WFkm3 + WFppr3 + WFrelsat3 ~ WFkm2 + WFppr2 + WFrelsat2
+  WFkm4 + WFppr4 + WFrelsat4 ~ WFkm3 + WFppr3 + WFrelsat3
+  WFkm5 + WFppr5 + WFrelsat5 ~ WFkm4 + WFppr4 + WFrelsat4
+  WFkm6 + WFppr6 + WFrelsat6 ~ WFkm5 + WFppr5 + WFrelsat5
+  
+  # Estimate correlations within same wave
+  WFkm1 ~~ WFppr1 #I am pretty sure they missed this line in the og tutorial
+  WFkm2 ~~ WFppr2
+  WFkm3 ~~ WFppr3
+  WFkm4 ~~ WFppr4
+  WFkm5 ~~ WFppr5
+  WFkm6 ~~ WFppr6
+  
+  WFkm1 ~~ WFrelsat1 #I am pretty sure they missed this line in the og tutorial
+  WFkm2 ~~ WFrelsat2
+  WFkm3 ~~ WFrelsat3
+  WFkm4 ~~ WFrelsat4
+  WFkm5 ~~ WFrelsat5
+  WFkm6 ~~ WFrelsat6
+  
+  WFppr1 ~~ WFrelsat1 #I am pretty sure they missed this line in the og tutorial
+  WFppr2 ~~ WFrelsat2
+  WFppr3 ~~ WFrelsat3
+  WFppr4 ~~ WFrelsat4
+  WFppr5 ~~ WFrelsat5
+  WFppr6 ~~ WFrelsat6
+  
+  
+  ##########################
+  # ADDITIONAL CONSTRAINTS #
+  ##########################
+  
+  # Set correlations between between-factors (RIs) and within-factors at wave 1 at 0
+  RIkm + RIppr + RIrelsat ~~ 0*WFkm1 + 0*WFppr1 + 0*WFrelsat1
+ 
+'
+
+
+relsat.m1.fit <- cfa(relsat.m1,
+                   data = dfSEM,
+                   missing = "ML",
+                   #em.iter.max = 20000, #default is 10,000 but we're getting some convergence warnings, so maybe try out later
+                   std.lv = T#, #scales the latent variables to 1, rather than relying on first item scaling
+                   #se = 'bootstrap'
+                   ) #dont really need the bootstrap, since we don't care about indirect effects.
+summary(relsat.m1.fit, fit.measures = T, standardized =T, ci = T)
+
+```
+
+#### Weak
+
+
+```{r}
+relsatWeak.m1 <- '
+
+  #####################
+  # MEASUREMENT MODEL #
+  #####################
+  
+  # Factor models for km at 6 waves (constrained)
+  Fkm1 =~ a*km1_t1 + d*km4_t1 + e*km5_t1 + f*km6_t1
+  Fkm2 =~ a*km1_t2 + d*km4_t2 + e*km5_t2 + f*km6_t2
+  Fkm3 =~ a*km1_t3 + d*km4_t3 + e*km5_t3 + f*km6_t3
+  Fkm4 =~ a*km1_t4 + d*km4_t4 + e*km5_t4 + f*km6_t4
+  Fkm5 =~ a*km1_t5 + d*km4_t5 + e*km5_t5 + f*km6_t5
+  Fkm6 =~ a*km1_t6 + d*km4_t6 + e*km5_t6 + f*km6_t6
+  
+  # Factor models for ppr at 6 waves (constrained)
+  Fppr1 =~ g*ppr1_t1 + h*ppr2_t1 + i*ppr3_t1 + j*ppr4_t1
+  Fppr2 =~ g*ppr1_t2 + h*ppr2_t2 + i*ppr3_t2 + j*ppr4_t2
+  Fppr3 =~ g*ppr1_t3 + h*ppr2_t3 + i*ppr3_t3 + j*ppr4_t3
+  Fppr4 =~ g*ppr1_t4 + h*ppr2_t4 + i*ppr3_t4 + j*ppr4_t4
+  Fppr5 =~ g*ppr1_t5 + h*ppr2_t5 + i*ppr3_t5 + j*ppr4_t5
+  Fppr6 =~ g*ppr1_t6 + h*ppr2_t6 + i*ppr3_t6 + j*ppr4_t6
+  
+  # Factor models for PA at 6 waves (constrained)
+  Frelsat1 =~ u*relsat_t1 
+  Frelsat2 =~ u*relsat_t2 
+  Frelsat3 =~ u*relsat_t3 
+  Frelsat4 =~ u*relsat_t4 
+  Frelsat5 =~ u*relsat_t5 
+  Frelsat6 =~ u*relsat_t6 
+  
+  ################
+  # BETWEEN PART #
+  ################
+  
+  # Create between factors (RIs)
+  RIkm =~ 1*Fkm1 + 1*Fkm2 + 1*Fkm3 + 1*Fkm4 + 1*Fkm5 + 1*Fkm6
+  RIppr =~ 1*Fppr1 + 1*Fppr2 + 1*Fppr3 + 1*Fppr4 + 1*Fppr5 + 1*Fppr6
+  RIrelsat =~ 1*Frelsat1 + 1*Frelsat2 + 1*Frelsat3 + 1*Frelsat4 + 1*Frelsat5 + 1*Frelsat6
+  
+  # Set residual variances of all Fkm and Fppr vars to 0
+  # I think this specifies all variance of the factors goes to either w/n or b/n
+  Fkm1 ~~ 0*Fkm1
+  Fkm2 ~~ 0*Fkm2
+  Fkm3 ~~ 0*Fkm3
+  Fkm4 ~~ 0*Fkm4
+  Fkm5 ~~ 0*Fkm5
+  Fkm6 ~~ 0*Fkm6
+  Fppr1 ~~ 0*Fppr1
+  Fppr2 ~~ 0*Fppr2
+  Fppr3 ~~ 0*Fppr3
+  Fppr4 ~~ 0*Fppr4
+  Fppr5 ~~ 0*Fppr5
+  Fppr6 ~~ 0*Fppr6
+  Frelsat1 ~~ 0*Frelsat1
+  Frelsat2 ~~ 0*Frelsat2
+  Frelsat3 ~~ 0*Frelsat3
+  Frelsat4 ~~ 0*Frelsat4
+  Frelsat5 ~~ 0*Frelsat5
+  Frelsat6 ~~ 0*Frelsat6
+  
+
+  ###############
+  # WITHIN PART #
+  ###############
+
+  # Create within-components
+  WFkm1 =~ 1*Fkm1
+  WFkm2 =~ 1*Fkm2
+  WFkm3 =~ 1*Fkm3
+  WFkm4 =~ 1*Fkm4
+  WFkm5 =~ 1*Fkm5
+  WFkm6 =~ 1*Fkm6
+  
+  WFppr1 =~ 1*Fppr1
+  WFppr2 =~ 1*Fppr2
+  WFppr3 =~ 1*Fppr3
+  WFppr4 =~ 1*Fppr4
+  WFppr5 =~ 1*Fppr5
+  WFppr6 =~ 1*Fppr6
+  
+  WFrelsat1 =~ 1*Frelsat1
+  WFrelsat2 =~ 1*Frelsat2
+  WFrelsat3 =~ 1*Frelsat3
+  WFrelsat4 =~ 1*Frelsat4
+  WFrelsat5 =~ 1*Frelsat5
+  WFrelsat6 =~ 1*Frelsat6
+  
+  # Specify lagged effects between within-person centered latent variables
+  WFkm2 + WFppr2 + WFrelsat2 ~ WFkm1 + WFppr1 + WFrelsat1
+  WFkm3 + WFppr3 + WFrelsat3 ~ WFkm2 + WFppr2 + WFrelsat2
+  WFkm4 + WFppr4 + WFrelsat4 ~ WFkm3 + WFppr3 + WFrelsat3
+  WFkm5 + WFppr5 + WFrelsat5 ~ WFkm4 + WFppr4 + WFrelsat4
+  WFkm6 + WFppr6 + WFrelsat6 ~ WFkm5 + WFppr5 + WFrelsat5
+  
+  # Estimate correlations within same wave
+  WFkm1 ~~ WFppr1 #I am pretty sure they missed this line in the og tutorial
+  WFkm2 ~~ WFppr2
+  WFkm3 ~~ WFppr3
+  WFkm4 ~~ WFppr4
+  WFkm5 ~~ WFppr5
+  WFkm6 ~~ WFppr6
+  
+  WFkm1 ~~ WFrelsat1 #I am pretty sure they missed this line in the og tutorial
+  WFkm2 ~~ WFrelsat2
+  WFkm3 ~~ WFrelsat3
+  WFkm4 ~~ WFrelsat4
+  WFkm5 ~~ WFrelsat5
+  WFkm6 ~~ WFrelsat6
+  
+  WFppr1 ~~ WFrelsat1 #I am pretty sure they missed this line in the og tutorial
+  WFppr2 ~~ WFrelsat2
+  WFppr3 ~~ WFrelsat3
+  WFppr4 ~~ WFrelsat4
+  WFppr5 ~~ WFrelsat5
+  WFppr6 ~~ WFrelsat6
+  
+  
+  ##########################
+  # ADDITIONAL CONSTRAINTS #
+  ##########################
+  
+  # Set correlations between between-factors (RIs) and within-factors at wave 1 at 0
+  RIkm + RIppr + RIrelsat ~~ 0*WFkm1 + 0*WFppr1 + 0*WFrelsat1
+ 
+'
+
+
+relsatWeak.m1.fit <- cfa(relsatWeak.m1,
+                   data = dfSEM,
+                   missing = "ML",
+                   #em.iter.max = 20000, #default is 10,000 but we're getting some convergence warnings, so maybe try out later
+                   std.lv = T#, #scales the latent variables to 1, rather than relying on first item scaling
+                   #se = 'bootstrap'
+                   ) #dont really need the bootstrap, since we don't care about indirect effects.
+summary(relsatWeak.m1.fit, fit.measures = T, standardized =T, ci = T)
+
+```
+
+
+#### Strong 
+Not worth doing
 
 ## What if...
 The model-implied covariance structure and the observed covariance structure does not seem to overlap super well. A couple potential reasons are in play:
@@ -2793,6 +3351,194 @@ summary(baseCo.m1.fit, fit.measures = T, standardized =T, ci = T)
 
 ```
 
+Or do I need to do the main model, but just turn the regressions into covariances? I think that might do it?
+
+```{r}
+baseCo.m2 <- '
+
+  #####################
+  # MEASUREMENT MODEL #
+  #####################
+  
+  # Factor models for km at 6 waves (Constrained)
+  Fkm1 =~ a*km1_t1 + d*km4_t1 + e*km5_t1 + f*km6_t1
+  Fkm2 =~ a*km1_t2 + d*km4_t2 + e*km5_t2 + f*km6_t2
+  Fkm3 =~ a*km1_t3 + d*km4_t3 + e*km5_t3 + f*km6_t3
+  Fkm4 =~ a*km1_t4 + d*km4_t4 + e*km5_t4 + f*km6_t4
+  Fkm5 =~ a*km1_t5 + d*km4_t5 + e*km5_t5 + f*km6_t5
+  Fkm6 =~ a*km1_t6 + d*km4_t6 + e*km5_t6 + f*km6_t6
+  
+  # Factor models for ppr at 6 waves (Constrained)
+  Fppr1 =~ g*ppr1_t1 + h*ppr2_t1 + i*ppr3_t1 + j*ppr4_t1
+  Fppr2 =~ g*ppr1_t2 + h*ppr2_t2 + i*ppr3_t2 + j*ppr4_t2
+  Fppr3 =~ g*ppr1_t3 + h*ppr2_t3 + i*ppr3_t3 + j*ppr4_t3
+  Fppr4 =~ g*ppr1_t4 + h*ppr2_t4 + i*ppr3_t4 + j*ppr4_t4
+  Fppr5 =~ g*ppr1_t5 + h*ppr2_t5 + i*ppr3_t5 + j*ppr4_t5
+  Fppr6 =~ g*ppr1_t6 + h*ppr2_t6 + i*ppr3_t6 + j*ppr4_t6
+  
+  # Constrained intercepts over time (Strong invariance)
+  km1_t1 + km1_t2 + km1_t3 + km1_t4 + km1_t5 + km1_t6 ~ k*1
+  km4_t1 + km4_t2 + km4_t3 + km4_t4 + km4_t5 + km4_t6 ~ l*1
+  km5_t1 + km5_t2 + km5_t3 + km5_t4 + km5_t5 + km5_t6 ~ m*1
+  km6_t1 + km6_t2 + km6_t3 + km6_t4 + km6_t5 + km6_t6 ~ n*1
+  
+  ppr1_t1 + ppr1_t2 + ppr1_t3 + ppr1_t4 + ppr1_t5 + ppr1_t6 ~ o*1
+  ppr2_t1 + ppr2_t2 + ppr2_t3 + ppr2_t4 + ppr2_t5 + ppr2_t6 ~ p*1
+  ppr3_t1 + ppr3_t2 + ppr3_t3 + ppr3_t4 + ppr3_t5 + ppr3_t6 ~ q*1
+  ppr4_t1 + ppr4_t2 + ppr4_t3 + ppr4_t4 + ppr4_t5 + ppr4_t6 ~ r*1
+  
+  
+  # Free latent means from t=2 onward (only do this in combination with constraints on intercepts, above)
+  Fkm2 + Fkm3 + Fkm4 + Fkm5 + Fkm6 + Fppr1 + Fppr2 + Fppr3 + Fppr4 + Fppr5 + Fppr6 ~ 1
+  
+  ################
+  # BETWEEN PART #
+  ################
+  
+  # Create between factors (RIs)
+  RIkm =~ 1*Fkm1 + 1*Fkm2 + 1*Fkm3 + 1*Fkm4 + 1*Fkm5 + 1*Fkm6
+  RIppr =~ 1*Fppr1 + 1*Fppr2 + 1*Fppr3 + 1*Fppr4 + 1*Fppr5 + 1*Fppr6
+  
+  # Set residual variances of all Fkm and Fppr vars to 0
+  # I think this specifies all variance of the factors goes to either w/n or b/n
+  Fkm1 ~~ 0*Fkm1
+  Fkm2 ~~ 0*Fkm2
+  Fkm3 ~~ 0*Fkm3
+  Fkm4 ~~ 0*Fkm4
+  Fkm5 ~~ 0*Fkm5
+  Fkm6 ~~ 0*Fkm6
+  Fppr1 ~~ 0*Fppr1
+  Fppr2 ~~ 0*Fppr2
+  Fppr3 ~~ 0*Fppr3
+  Fppr4 ~~ 0*Fppr4
+  Fppr5 ~~ 0*Fppr5
+  Fppr6 ~~ 0*Fppr6
+
+  ###############
+  # WITHIN PART #
+  ###############
+
+  # Create within-components
+  WFkm1 =~ 1*Fkm1
+  WFkm2 =~ 1*Fkm2
+  WFkm3 =~ 1*Fkm3
+  WFkm4 =~ 1*Fkm4
+  WFkm5 =~ 1*Fkm5
+  WFkm6 =~ 1*Fkm6
+  
+  WFppr1 =~ 1*Fppr1
+  WFppr2 =~ 1*Fppr2
+  WFppr3 =~ 1*Fppr3
+  WFppr4 =~ 1*Fppr4
+  WFppr5 =~ 1*Fppr5
+  WFppr6 =~ 1*Fppr6
+  
+  # Specify lagged effects between within-person centered latent variables
+  WFkm2 + WFppr2 ~~ WFkm1 + WFppr1
+  WFkm3 + WFppr3 ~~ WFkm2 + WFppr2
+  WFkm4 + WFppr4 ~~ WFkm3 + WFppr3
+  WFkm5 + WFppr5 ~~ WFkm4 + WFppr4
+  WFkm6 + WFppr6 ~~ WFkm5 + WFppr5
+  
+  # Estimate correlations within same wave
+  WFkm1 ~~ WFppr1 #I am pretty sure they missed this line in the og tutorial
+  WFkm2 ~~ WFppr2
+  WFkm3 ~~ WFppr3
+  WFkm4 ~~ WFppr4
+  WFkm5 ~~ WFppr5
+  WFkm6 ~~ WFppr6
+  
+  ##########################
+  # ADDITIONAL CONSTRAINTS #
+  ##########################
+  
+  # Set correlations between between-factors (RIs) and within-factors at wave 1 at 0
+  RIkm + RIppr ~~ 0*WFkm1 + 0*WFppr1
+  
+'
 
 
+baseCo.m2.fit <- cfa(baseCo.m2,
+                   data = dfSEM,
+                   std.lv = T,
+                   missing = "ML"
+                   )
+summary(baseCo.m2.fit,fit.measures = T, standardized =T, ci = T)
+```
 
+What if I just model ppr--would that even work? If not, then it really suggests this data is weird
+```{r}
+baseCo.m3 <- '
+
+  #####################
+  # MEASUREMENT MODEL #
+  #####################
+  
+  # Factor models for ppr at 6 waves (UNconstrained)
+  Fppr1 =~ ppr1_t1 + ppr2_t1 + ppr3_t1 + ppr4_t1
+  Fppr2 =~ ppr1_t2 + ppr2_t2 + ppr3_t2 + ppr4_t2
+  Fppr3 =~ ppr1_t3 + ppr2_t3 + ppr3_t3 + ppr4_t3
+  Fppr4 =~ ppr1_t4 + ppr2_t4 + ppr3_t4 + ppr4_t4
+  Fppr5 =~ ppr1_t5 + ppr2_t5 + ppr3_t5 + ppr4_t5
+  Fppr6 =~ ppr1_t6 + ppr2_t6 + ppr3_t6 + ppr4_t6
+  
+  ################
+  # BETWEEN PART #
+  ################
+  
+  # Create between factors (RIs)
+  
+  RIppr =~ 1*Fppr1 + 1*Fppr2 + 1*Fppr3 + 1*Fppr4 + 1*Fppr5 + 1*Fppr6
+  
+  # Set residual variances of all Fkm and Fppr vars to 0
+  # I think this specifies all variance of the factors goes to either w/n or b/n
+ 
+  Fppr1 ~~ 0*Fppr1
+  Fppr2 ~~ 0*Fppr2
+  Fppr3 ~~ 0*Fppr3
+  Fppr4 ~~ 0*Fppr4
+  Fppr5 ~~ 0*Fppr5
+  Fppr6 ~~ 0*Fppr6
+
+  ###############
+  # WITHIN PART #
+  ###############
+
+  # Create within-components
+  
+  WFppr1 =~ 1*Fppr1
+  WFppr2 =~ 1*Fppr2
+  WFppr3 =~ 1*Fppr3
+  WFppr4 =~ 1*Fppr4
+  WFppr5 =~ 1*Fppr5
+  WFppr6 =~ 1*Fppr6
+  
+  # Specify lagged effects between within-person centered latent variables
+  WFppr2 ~ WFppr1
+  WFppr3 ~ WFppr2
+  WFppr4 ~ WFppr3
+  WFppr5 ~ WFppr4
+  WFppr6 ~ WFppr5
+  
+  
+  ##########################
+  # ADDITIONAL CONSTRAINTS #
+  ##########################
+  
+  # Set correlations between between-factors (RIs) and within-factors at wave 1 at 0
+  RIppr ~~ 0*WFppr1
+  
+'
+
+
+baseCo.m3.fit <- cfa(baseCo.m3,
+                   data = dfSEM,
+                   missing = "ML",
+                   #em.iter.max = 20000, #default is 10,000 but we're getting some convergence warnings, so maybe try out later
+                   std.lv = T#, #scales the latent variables to 1, rather than relying on first item scaling
+                   #se = 'bootstrap'
+                   ) #dont really need the bootstrap, since we don't care about indirect effects.
+summary(base.m1.fit, fit.measures = T, standardized =T, ci = T)
+
+```
+Nothing fits in this data! which is kinda interesting, but also annoying
