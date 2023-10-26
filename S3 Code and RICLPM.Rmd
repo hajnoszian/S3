@@ -2137,6 +2137,7 @@ The structure seems like it holds up decently, but it's the measurement model at
 
 
 
+Does it matter to specify the item residual correlations across the time periods? I thought the cfa format would do that...
 ```{r}
 strong.m2 <- '
 
@@ -2174,6 +2175,12 @@ strong.m2 <- '
   
   # Free latent means from t=2 onward (only do this in combination with constraints on intercepts, above)
   Fkm2 + Fkm3 + Fkm4 + Fkm5 + Fkm6 + Fppr1 + Fppr2 + Fppr3 + Fppr4 + Fppr5 + Fppr6 ~ 1
+  
+  #Inner residual correlations of items, just some for now to test...
+  km1_t1 ~~ km1_t2 + km1_t3 + km1_t4 + km1_t5 + km1_t6
+  
+  ppr1_t1 ~~ ppr1_t1 + ppr1_t2 + ppr1_t3 + ppr1_t4 + ppr1_t5 + ppr1_t6
+  
   
   ################
   # BETWEEN PART #
@@ -2251,6 +2258,10 @@ strong.m2.fit <- cfa(strong.m2,
 summary(strong.m2.fit,fit.measures = T, standardized =T, ci = T)
 ```
 
+```{r}
+anova(strong.m2.fit, strong.m1.fit)
+```
+I'm not seeing an appreciable difference in the models with those added (given, not complete) residual covariances in the items. I don't thiiink they are necessary to add in fully since the covariances are being split into the intercepts and within differences already, with covariances at each of those levels on the latent variable. 
 
 #### Configural W/Demographic Covariate
 Let's skip straight to the km2 and km3 cut. We can proceed as per the weak and strong tests from here though.
@@ -2664,7 +2675,7 @@ strongInvar.m1 <- '
 '
 
 
-strongInvar.m1.fit <- cfa(weakInvar.m1,
+strongInvar.m1.fit <- cfa(strongInvar.m1,
                    data = dfSEM,
                    std.lv = T,
                    missing = "ML"
