@@ -2261,7 +2261,127 @@ summary(strong.m2.fit,fit.measures = T, standardized =T, ci = T)
 ```{r}
 anova(strong.m2.fit, strong.m1.fit)
 ```
-I'm not seeing an appreciable difference in the models with those added (given, not complete) residual covariances in the items. I don't thiiink they are necessary to add in fully since the covariances are being split into the intercepts and within differences already, with covariances at each of those levels on the latent variable. 
+I'm not seeing an appreciable difference in the models with those added (given, not complete) residual covariances in the items. I don't thiiink they are necessary to add in fully since the covariances are being split into the intercepts and within differences already, with covariances at each of those levels on the latent variable. I'm not seeing this additional by-item residual covariance in tutorial the Mulder and Hamaker have, nor do I see it in some other tutorials from other folks, so I think it's alright for now. 
+
+
+##### Strong with fixed daily correlations
+```{r}
+strong.m3 <- '
+
+  #####################
+  # MEASUREMENT MODEL #
+  #####################
+  
+  # Factor models for km at 6 waves (Constrained)
+  Fkm1 =~ a*km1_t1 + d*km4_t1 + e*km5_t1 + f*km6_t1
+  Fkm2 =~ a*km1_t2 + d*km4_t2 + e*km5_t2 + f*km6_t2
+  Fkm3 =~ a*km1_t3 + d*km4_t3 + e*km5_t3 + f*km6_t3
+  Fkm4 =~ a*km1_t4 + d*km4_t4 + e*km5_t4 + f*km6_t4
+  Fkm5 =~ a*km1_t5 + d*km4_t5 + e*km5_t5 + f*km6_t5
+  Fkm6 =~ a*km1_t6 + d*km4_t6 + e*km5_t6 + f*km6_t6
+  
+  # Factor models for ppr at 6 waves (Constrained)
+  Fppr1 =~ g*ppr1_t1 + h*ppr2_t1 + i*ppr3_t1 + j*ppr4_t1
+  Fppr2 =~ g*ppr1_t2 + h*ppr2_t2 + i*ppr3_t2 + j*ppr4_t2
+  Fppr3 =~ g*ppr1_t3 + h*ppr2_t3 + i*ppr3_t3 + j*ppr4_t3
+  Fppr4 =~ g*ppr1_t4 + h*ppr2_t4 + i*ppr3_t4 + j*ppr4_t4
+  Fppr5 =~ g*ppr1_t5 + h*ppr2_t5 + i*ppr3_t5 + j*ppr4_t5
+  Fppr6 =~ g*ppr1_t6 + h*ppr2_t6 + i*ppr3_t6 + j*ppr4_t6
+  
+  # Constrained intercepts over time (Strong invariance)
+  km1_t1 + km1_t2 + km1_t3 + km1_t4 + km1_t5 + km1_t6 ~ k*1
+  km4_t1 + km4_t2 + km4_t3 + km4_t4 + km4_t5 + km4_t6 ~ l*1
+  km5_t1 + km5_t2 + km5_t3 + km5_t4 + km5_t5 + km5_t6 ~ m*1
+  km6_t1 + km6_t2 + km6_t3 + km6_t4 + km6_t5 + km6_t6 ~ n*1
+  
+  ppr1_t1 + ppr1_t2 + ppr1_t3 + ppr1_t4 + ppr1_t5 + ppr1_t6 ~ o*1
+  ppr2_t1 + ppr2_t2 + ppr2_t3 + ppr2_t4 + ppr2_t5 + ppr2_t6 ~ p*1
+  ppr3_t1 + ppr3_t2 + ppr3_t3 + ppr3_t4 + ppr3_t5 + ppr3_t6 ~ q*1
+  ppr4_t1 + ppr4_t2 + ppr4_t3 + ppr4_t4 + ppr4_t5 + ppr4_t6 ~ r*1
+  
+  
+  # Free latent means from t=2 onward (only do this in combination with constraints on intercepts, above)
+  Fkm2 + Fkm3 + Fkm4 + Fkm5 + Fkm6 + Fppr2 + Fppr3 + Fppr4 + Fppr5 + Fppr6 ~ 1
+  
+  ################
+  # BETWEEN PART #
+  ################
+  
+  # Create between factors (RIs)
+  RIkm =~ 1*Fkm1 + 1*Fkm2 + 1*Fkm3 + 1*Fkm4 + 1*Fkm5 + 1*Fkm6
+  RIppr =~ 1*Fppr1 + 1*Fppr2 + 1*Fppr3 + 1*Fppr4 + 1*Fppr5 + 1*Fppr6
+  
+  # Set residual variances of all Fkm and Fppr vars to 0
+  # I think this specifies all variance of the factors goes to either w/n or b/n
+  Fkm1 ~~ 0*Fkm1
+  Fkm2 ~~ 0*Fkm2
+  Fkm3 ~~ 0*Fkm3
+  Fkm4 ~~ 0*Fkm4
+  Fkm5 ~~ 0*Fkm5
+  Fkm6 ~~ 0*Fkm6
+  Fppr1 ~~ 0*Fppr1
+  Fppr2 ~~ 0*Fppr2
+  Fppr3 ~~ 0*Fppr3
+  Fppr4 ~~ 0*Fppr4
+  Fppr5 ~~ 0*Fppr5
+  Fppr6 ~~ 0*Fppr6
+
+  ###############
+  # WITHIN PART #
+  ###############
+
+  # Create within-components
+  WFkm1 =~ 1*Fkm1
+  WFkm2 =~ 1*Fkm2
+  WFkm3 =~ 1*Fkm3
+  WFkm4 =~ 1*Fkm4
+  WFkm5 =~ 1*Fkm5
+  WFkm6 =~ 1*Fkm6
+  
+  WFppr1 =~ 1*Fppr1
+  WFppr2 =~ 1*Fppr2
+  WFppr3 =~ 1*Fppr3
+  WFppr4 =~ 1*Fppr4
+  WFppr5 =~ 1*Fppr5
+  WFppr6 =~ 1*Fppr6
+  
+  # Specify lagged effects between within-person centered latent variables
+  WFkm2 + WFppr2 ~ WFkm1 + WFppr1
+  WFkm3 + WFppr3 ~ WFkm2 + WFppr2
+  WFkm4 + WFppr4 ~ WFkm3 + WFppr3
+  WFkm5 + WFppr5 ~ WFkm4 + WFppr4
+  WFkm6 + WFppr6 ~ WFkm5 + WFppr5
+  
+  # Estimate correlations within same wave
+  WFkm1 ~~ s*WFppr1 #I am pretty sure they missed this line in the og tutorial
+  WFkm2 ~~ s*WFppr2
+  WFkm3 ~~ s*WFppr3
+  WFkm4 ~~ s*WFppr4
+  WFkm5 ~~ s*WFppr5
+  WFkm6 ~~ s*WFppr6
+  
+  ##########################
+  # ADDITIONAL CONSTRAINTS #
+  ##########################
+  
+  # Set correlations between between-factors (RIs) and within-factors at wave 1 at 0
+  RIkm + RIppr ~~ 0*WFkm1 + 0*WFppr1
+  
+'
+
+
+strong.m3.fit <- cfa(strong.m3,
+                   data = dfSEM,
+                   std.lv = T,
+                   missing = "ML"
+                   )
+summary(strong.m3.fit,fit.measures = T, standardized =T, ci = T)
+```
+
+```{r}
+anova(strong.m1.fit, strong.m3.fit)
+```
+Suggests not an appreciable difference--the restrictions are tenable. The inner, same-day correlation is r = .498 (which is pretty big,actually)
 
 #### Configural W/Demographic Covariate
 Let's skip straight to the km2 and km3 cut. We can proceed as per the weak and strong tests from here though.
