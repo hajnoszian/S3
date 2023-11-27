@@ -229,6 +229,7 @@ dfDem |>
     AgeM = mean(age, na.rm = T),
     AgeSD = sd(age, na.rm = T)
     )
+range(dfDem$age)
 
 ggplot(dfDem, aes(x = age)) +
   geom_histogram(binwidth = 1) +
@@ -319,6 +320,7 @@ dfDem |>
     RelLenM = mean(rellength, na.rm = T),
     RelLenSD = sd(rellength, na.rm = T)
     )
+range(dfDem$rellength)
 
 ggplot(dfDem, aes(x = rellength)) +
   geom_histogram(binwidth = 2) +
@@ -342,6 +344,10 @@ ggplot(dfDem, aes(x = rellength)) +
 
 #### Living Situation
 Kinda tricky to plot. TBD for now.
+```{r}
+
+```
+
 
 #### Partner in Study
 ```{r}
@@ -354,6 +360,19 @@ ggplot(dfDem, aes(x = Parstudy)) +
        x = "",
        y = "Count")
 ```
+### Intistution
+
+```{r}
+prop.table(table(dfDem$Institution))*100
+
+ggplot(dfDem, aes(x = Institution)) +
+  geom_bar() +
+  theme(axis.text.x = element_text(angle = 30, vjust = 0.5)) +
+  labs(title = "Institution",
+       x = "",
+       y = "Count")
+```
+
 ### Necessary?
 
 ##### Attachment (Baseline)
