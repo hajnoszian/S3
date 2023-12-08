@@ -51,7 +51,7 @@ Actually wait, there is no other info I can use to confirm (mis) alignment in ei
 
 So we will lose some from the baseline to the daily merge
 
-#### Data checks, Recoding, Renaming
+### Data checks, Recoding, Renaming
 Baseline Recoding
 ```{r}
 table(df0$gend)
@@ -208,7 +208,7 @@ prop.table(table(dfDem$gend))*100
 p1 <- ggplot(dfDem, aes(x = gend)) +
   geom_bar() +
   theme(axis.text.x = element_text(angle = 0, vjust = 0.5)) +
-  labs(title = "Ethnicity",
+  labs(title = "Gender",
        x="",
        y = "Count")
 
@@ -344,8 +344,12 @@ ggplot(dfDem, aes(x = rellength)) +
 
 #### Living Situation
 Kinda tricky to plot. TBD for now.
-```{r}
 
+With partner:
+
+```{r}
+table(as.numeric(unclass(dfDem$living1))) #its a haven label, so need to do some odd unlableing to get the data out
+prop.table(table(as.numeric(unclass(dfDem$living1))))*100
 ```
 
 
@@ -581,16 +585,16 @@ o1 |>
   ungroup(ID) |> 
   summarise(mean = mean(KMtot)) #note, this should be the exact same ratio as the above 81%. I.e. 4.85 days/6 is also == 81%
 
-ggplot(o1, aes(x = KMtot)) +
+p1 <- ggplot(o1, aes(x = KMtot)) +
   geom_bar() +
-  geom_vline(xintercept = mean(o1$KMtot), color = "red", linetype = "longdash") +
-  labs(title = "All KM Days",
-       x = "Number of Days Meeting >0 of Total Scale Threshold",
+  #geom_vline(xintercept = mean(o1$KMtot), color = "red", linetype = "longdash") +
+  labs(title = "Meeting >0 of Total Scale Threshold",
+       x = "Number of Days",
        y = "Number of People")
 ```
 
 #### Sans KM2 KM3, How often? Low bar+ (>4, 1/4 of scale)
-The 6 KM items are 0-4, meaning maximum points is 24 
+The 6 KM items are 0-4, meaning maximum points is 16 
 ```{r}
 df |> 
   mutate(
@@ -619,16 +623,16 @@ o1 |>
   ungroup(ID) |> 
   summarise(mean = mean(KMtot)) #note, this should be the exact same ratio as the above 46.%. I.e. 3.23 days/6 is also == 53.8%
 
-ggplot(o1, aes(x = KMtot)) +
+p2 <- ggplot(o1, aes(x = KMtot)) +
   geom_bar() +
-  geom_vline(xintercept = mean(o1$KMtot), color = "red", linetype = "longdash") +
-  labs(title = "Qtr+ KM Days",
-       x = "Number of Days Meeting 1/4 of Total Scale Threshold",
+ # geom_vline(xintercept = mean(o1$KMtot), color = "red", linetype = "longdash") +
+  labs(title = "Meeting >1/4 of Total Scale Threshold",
+       x = "Number of Days",
        y = "Number of People")
 ```
 
 #### Sans KM2 KM3, How often? Med+ bar (>8, 1/2 of scale)
-The 6 KM items are 0-4, meaning maximum points is 24 
+The 6 KM items are 0-4, meaning maximum points is 16
 ```{r}
 df |> 
   mutate(
@@ -657,16 +661,16 @@ o1 |>
   ungroup(ID) |> 
   summarise(mean = mean(KMtot)) #note, this should be the exact same ratio as the above 28.5%. I.e. 1.7 days/6 is also == 28.5%
 
-ggplot(o1, aes(x = KMtot)) +
+p3 <- ggplot(o1, aes(x = KMtot)) +
   geom_bar() +
-  geom_vline(xintercept = mean(o1$KMtot), color = "red", linetype = "longdash") +
-  labs(title = "Halfs+ KM Days",
-       x = "Number of Days Meeting 1/2 of Total Scale Threshold",
+  #geom_vline(xintercept = mean(o1$KMtot), color = "red", linetype = "longdash") +
+  labs(title = "Meeting >1/2 of Total Scale Threshold",
+       x = "Number of Days",
        y = "Number of People")
 ```
 
 #### Sans KM2 KM3, How often? high bar+ (>12, 3/4 of scale)
-The 6 KM items are 0-4, meaning maximum points is 24 
+The 6 KM items are 0-4, meaning maximum points is 16 
 ```{r}
 df |> 
   mutate(
@@ -696,13 +700,19 @@ o1 |>
   summarise(mean = mean(KMtot)) #note, this should be the exact same ratio as the above 9.7%. I.e. .10 days/6 is also == 9.7%
 
 
-ggplot(o1, aes(x = KMtot)) +
+p4 <- ggplot(o1, aes(x = KMtot)) +
   geom_bar() +
-  geom_vline(xintercept = mean(o1$KMtot), color = "red", linetype = "longdash") +
-  labs(title = "Three Quarters+ KM Days",
-       x = "Number of Days Meeting 3/4 of Total Scale Threshold",
+  #geom_vline(xintercept = mean(o1$KMtot), color = "red", linetype = "longdash") +
+  labs(title = "Meeting >3/4 of Total Scale Threshold",
+       x = "Number of Days",
        y = "Number of People")
 ```
+
+```{r}
+#needs the p1-p4 run from above to make these work
+grid.arrange(p1,p2, p3,p4, nrow = 2) #red line indicators are kinda hard to disentangle frankly, so I'm cutting those for now
+```
+
 
 ### What evoked the KM?
 
@@ -732,6 +742,8 @@ table(df$WhatKmTEXT)
 
 ```{r}
 #Same as code above, but with added markers for KM on that day
+#HAS KM2 AND KM3: DO NOT USE
+#########################################################################################################
 o1 <- df |> 
   select(ID, Partner, Friend, Family, Colleague, Acquaintance, Stranger, Animal, Nature, Music, NonFiction, Fiction, OtherKM,
          km1, km2, km3, km4, km5 , km6) |> 
@@ -892,36 +904,36 @@ p1 <- o1 |>
   ggplot(aes(x = Evoker)) +
   geom_bar() +
   theme(axis.text.x = element_text(angle = 60, vjust = 0.5)) +
-  labs(title = "Evokers, All KM Days",
+  labs(title = ">0 KM Days",
        x = "",
-       y = "Count (n = 1318)")
+       y = "Count (n = 1312)")
 
 p2 <- o1 |> 
   filter(MarkQtr == 1) |> 
   ggplot(aes(x = Evoker)) +
   geom_bar() +
   theme(axis.text.x = element_text(angle = 60, vjust = 0.5)) +
-  labs(title = "Evokers, Qtr+ KM Days",
+  labs(title = ">1/4+ KM Days",
        x = "",
-       y = "Count (n = 870)")
+       y = "Count (n = 981)")
 
 p3 <- o1 |> 
   filter(MarkHalf == 1) |> 
   ggplot(aes(x = Evoker)) +
   geom_bar() +
   theme(axis.text.x = element_text(angle = 60, vjust = 0.5)) +
-  labs(title = "Evokers, Half+ KM Days",
+  labs(title = ">1/2 KM Days",
        x = "",
-       y = "Count (n = 292)") 
+       y = "Count (n = 546)") 
 
 p4 <- o1 |> 
   filter(Mark34 == 1) |> 
   ggplot(aes(x = Evoker)) +
   geom_bar() +
   theme(axis.text.x = element_text(angle = 60, vjust = 0.5)) +
-  labs(title = "Evokers, Three Quarters+ KM Days",
+  labs(title = ">3/4 KM Days",
        x = "",
-       y = "Count (n = 33)") 
+       y = "Count (n = 205)") 
 
 grid.arrange(p1,p2, p3,p4, nrow = 2)
 
@@ -949,14 +961,83 @@ o1 |>
     MarkTotal = ifelse(Mark34 == 1, "ThreeQtr", MarkTotal),
     MarkTotal = factor(MarkTotal, levels = c("Mark", "Qtr", "Half", "ThreeQtr"))
     ) |> 
-  ggplot(aes(MarkTotal, fill = Evoker)) +
+  ggplot(aes(x= MarkTotal, fill = Evoker)) +
   geom_bar(position = "fill") +
   theme(axis.text.x = element_text(angle = 60, vjust = 0.5)) +
   labs(title = "Evokers",
        x = "KM Days",
-       y = "Percentage")
+       y = "Percentage") 
 
+#maybe change this mutation to include a evoker mutate--top 5 then "other" the rest?
+o1 |> 
+  mutate(
+    MarkTotal = ">0",
+    MarkTotal = ifelse(MarkQtr == 1, ">1/4", MarkTotal),
+    MarkTotal = ifelse(MarkHalf == 1, ">1/2", MarkTotal),
+    MarkTotal = ifelse(Mark34 == 1, ">3/4", MarkTotal),
+    MarkTotal = factor(MarkTotal, levels = c(">0", ">1/4", ">1/2", ">3/4")),
+    Evoker = recode(factor(Evoker), 
+       Partner = "Partner",
+       Friend = "Friend",
+       Family = "Family",
+       Music = "Music",
+       Nature = "Nature",
+       Fiction = "Remaining",
+       NonFiction = "Remaining",
+       Acquaintance = "Remaining",
+       Animal = "Remaining",
+       Colleague = "Remaining",
+       OtherKM = "Remaining",
+       Stranger = "Remaining"
+       ),
+    Evoker = factor(Evoker, levels = c("Partner", "Friend", "Family", "Music", "Nature", "Remaining"))
+    #relevel it again from here for re-ordering?
+    ) |> 
+  filter(!is.na(MarkTotal)) |> #to get rid of those folks who reported evokers but just on items2 and 3 (which are cut)
+  ggplot(aes(MarkTotal, fill = Evoker)) +
+  geom_bar(position = "fill", stat = "count") +
+  theme(axis.text.x = element_text(vjust = 0.5)) +
+  scale_fill_viridis(discrete=TRUE) +
+  labs(title = "Evokers",
+       x = "Threshold of Kama Muta Scale",
+       y = "Percentage")
 ```
+Just to have some practice with case_when. This code should do the exact same thing
+```{r}
+o1 |> 
+  mutate(
+    MarkTotal = case_when(
+      .default = "0",
+      Mark34 == 1 ~ ">3/4",
+      MarkHalf == 1 ~ ">1/2",
+      MarkQtr == 1 ~ ">1/4",
+      Mark == 1 ~ ">0"
+      ), #just practicing the case_when. Note: this order matters
+    MarkTotal = factor(MarkTotal, levels = c(">0", ">1/4", ">1/2", ">3/4")),
+    Evoker = recode(factor(Evoker), 
+       Partner = "Partner",
+       Friend = "Friend",
+       Family = "Family",
+       Music = "Music",
+       Nature = "Nature",
+       Fiction = "Fiction",
+       NonFiction = "Other",
+       Acquaintance = "Other",
+       Animal = "Other",
+       Colleague = "Other",
+       OtherKM = "Other",
+       Stranger = "Other"
+       ),
+    Evoker = factor(Evoker, levels = c("Partner", "Friend", "Family", "Music", "Nature", "Fiction", "Other")) #reordering the factor
+    ) |> 
+  ggplot(aes(MarkTotal, fill = Evoker)) +
+  geom_bar(position = "fill", stat = "count") +
+  theme(axis.text.x = element_text(vjust = 0.5)) +
+  labs(title = "Evokers",
+       x = "Threshold of Kama Muta Scale",
+       y = "Percentage")
+```
+
 
 Two things I'm learning here.
 A) Partners are by far the most common elicitor of KM feels. This is definitely on track for what we'd expect.
@@ -1174,6 +1255,98 @@ x11, x21, x31, x41 = xWaveVar. So waves 1 through 4 for x variable 1
 x12, x22, x32, x42 = So waves 1 through 4 for x variable 2 etc.) 
 
 Currently using varX_tY: variable item X at time Y
+
+### Measurement models
+Trying this out. Should be the same as the factors in the actual measurement model. But at least here we can have a clearer look at the factor loadings and the comparisons between restricted and unrestricted models.
+
+```{r}
+measurement.m1 <- ' 
+  # Factor models for km at 6 waves (UNconstrained)
+  Fkm1 =~ km1_t1 + km2_t1 + km3_t1 + km4_t1 + km5_t1 + km6_t1
+  Fkm2 =~ km1_t2 + km2_t2 + km3_t2 + km4_t2 + km5_t2 + km6_t2
+  Fkm3 =~ km1_t3 + km2_t3 + km3_t3 + km4_t3 + km5_t3 + km6_t3
+  Fkm4 =~ km1_t4 + km2_t4 + km3_t4 + km4_t4 + km5_t4 + km6_t4
+  Fkm5 =~ km1_t5 + km2_t5 + km3_t5 + km4_t5 + km5_t5 + km6_t5
+  Fkm6 =~ km1_t6 + km2_t6 + km3_t6 + km4_t6 + km5_t6 + km6_t6
+  
+  # Factor models for ppr at 6 waves (UNconstrained)
+  Fppr1 =~ ppr1_t1 + ppr2_t1 + ppr3_t1 + ppr4_t1
+  Fppr2 =~ ppr1_t2 + ppr2_t2 + ppr3_t2 + ppr4_t2
+  Fppr3 =~ ppr1_t3 + ppr2_t3 + ppr3_t3 + ppr4_t3
+  Fppr4 =~ ppr1_t4 + ppr2_t4 + ppr3_t4 + ppr4_t4
+  Fppr5 =~ ppr1_t5 + ppr2_t5 + ppr3_t5 + ppr4_t5
+  Fppr6 =~ ppr1_t6 + ppr2_t6 + ppr3_t6 + ppr4_t6
+'
+
+
+measurement.m2 <- ' 
+# Factor models for km at 6 waves (Constrained)
+  Fkm1 =~ a*km1_t1 + b*km2_t1 + c*km3_t1 + d*km4_t1 + e*km5_t1 + f*km6_t1
+  Fkm2 =~ a*km1_t2 + b*km2_t2 + c*km3_t2 + d*km4_t2 + e*km5_t2 + f*km6_t2
+  Fkm3 =~ a*km1_t3 + b*km2_t3 + c*km3_t3 + d*km4_t3 + e*km5_t3 + f*km6_t3
+  Fkm4 =~ a*km1_t4 + b*km2_t4 + c*km3_t4 + d*km4_t4 + e*km5_t4 + f*km6_t4
+  Fkm5 =~ a*km1_t5 + b*km2_t5 + c*km3_t5 + d*km4_t5 + e*km5_t5 + f*km6_t5
+  Fkm6 =~ a*km1_t6 + b*km2_t6 + c*km3_t6 + d*km4_t6 + e*km5_t6 + f*km6_t6
+  
+  # Factor models for ppr at 6 waves (Constrained)
+  Fppr1 =~ g*ppr1_t1 + h*ppr2_t1 + i*ppr3_t1 + j*ppr4_t1
+  Fppr2 =~ g*ppr1_t2 + h*ppr2_t2 + i*ppr3_t2 + j*ppr4_t2
+  Fppr3 =~ g*ppr1_t3 + h*ppr2_t3 + i*ppr3_t3 + j*ppr4_t3
+  Fppr4 =~ g*ppr1_t4 + h*ppr2_t4 + i*ppr3_t4 + j*ppr4_t4
+  Fppr5 =~ g*ppr1_t5 + h*ppr2_t5 + i*ppr3_t5 + j*ppr4_t5
+  Fppr6 =~ g*ppr1_t6 + h*ppr2_t6 + i*ppr3_t6 + j*ppr4_t6
+'
+
+measurement.m3 <- ' 
+# Factor models for km at 6 waves (Constrained)
+  Fkm1 =~ a*km1_t1 + d*km4_t1 + e*km5_t1 + f*km6_t1
+  Fkm2 =~ a*km1_t2 + d*km4_t2 + e*km5_t2 + f*km6_t2
+  Fkm3 =~ a*km1_t3 + d*km4_t3 + e*km5_t3 + f*km6_t3
+  Fkm4 =~ a*km1_t4 + d*km4_t4 + e*km5_t4 + f*km6_t4
+  Fkm5 =~ a*km1_t5 + d*km4_t5 + e*km5_t5 + f*km6_t5
+  Fkm6 =~ a*km1_t6 + d*km4_t6 + e*km5_t6 + f*km6_t6
+  
+  # Factor models for ppr at 6 waves (Constrained)
+  Fppr1 =~ g*ppr1_t1 + h*ppr2_t1 + i*ppr3_t1 + j*ppr4_t1
+  Fppr2 =~ g*ppr1_t2 + h*ppr2_t2 + i*ppr3_t2 + j*ppr4_t2
+  Fppr3 =~ g*ppr1_t3 + h*ppr2_t3 + i*ppr3_t3 + j*ppr4_t3
+  Fppr4 =~ g*ppr1_t4 + h*ppr2_t4 + i*ppr3_t4 + j*ppr4_t4
+  Fppr5 =~ g*ppr1_t5 + h*ppr2_t5 + i*ppr3_t5 + j*ppr4_t5
+  Fppr6 =~ g*ppr1_t6 + h*ppr2_t6 + i*ppr3_t6 + j*ppr4_t6
+'
+
+
+measurement.m1.fit <- cfa(measurement.m1,
+                   data = dfSEM,
+                   missing = "ML",
+                   #em.iter.max = 20000, #default is 10,000 but we're getting some convergence warnings, so maybe try out later
+                   std.lv = T#, #scales the latent variables to 1, rather than relying on first item scaling
+                   #se = 'bootstrap'
+                   )
+
+measurement.m2.fit <- cfa(measurement.m2,
+                   data = dfSEM,
+                   missing = "ML",
+                   #em.iter.max = 20000, #default is 10,000 but we're getting some convergence warnings, so maybe try out later
+                   std.lv = T#, #scales the latent variables to 1, rather than relying on first item scaling
+                   #se = 'bootstrap'
+                   )
+
+measurement.m3.fit <- cfa(measurement.m3,
+                   data = dfSEM,
+                   missing = "ML",
+                   #em.iter.max = 20000, #default is 10,000 but we're getting some convergence warnings, so maybe try out later
+                   std.lv = T#, #scales the latent variables to 1, rather than relying on first item scaling
+                   #se = 'bootstrap'
+                   )
+
+anova(measurement.m1.fit, measurement.m2.fit)
+
+summary(measurement.m3.fit, fit.measures = T, standardized =T, ci = T)
+
+```
+Heads up, these are different measurement models than the ones in the full model--loadings are different. This motivates me to actually run the "bad" measurement model in the full model at the end just to due diligence show that it is a bad model.
+
 
 ## Base Model
 
@@ -2147,7 +2320,7 @@ modindices(strong.m1.fit, sort = T)
 
 
 ```{r}
-anova(weak.m1.fit, strong.m1.fit)
+anova(weak.m1.fit, strong.m1.fit) #comparing the two, free estimated inner corr effects, but appropriately constrained models.
 ```
 Strong invariance holds by this test!! That's cool actually.
 
@@ -2396,11 +2569,138 @@ strong.m3.fit <- cfa(strong.m3,
                    )
 summary(strong.m3.fit,fit.measures = T, standardized =T, ci = T)
 ```
+```{r}
+anova(weak.m1.fit, strong.m3.fit)#weak 1 has weak invar. Strong 3 has the fixed corrs, so not a strictly equal comparison
+```
+```{r}
+anova(weak.m1.fit, strong.m1.fit) #weak vs strong, free estimated effects (the main one to report)
+```
+
+
 
 ```{r}
-anova(strong.m1.fit, strong.m3.fit)
+anova(strong.m1.fit, strong.m3.fit) #free estimated corr vs restricted corr strong models
 ```
 Suggests not an appreciable difference--the restrictions are tenable. The inner, same-day correlation is r = .498 (which is pretty big,actually)
+
+If we DID keep the two items in there, what would they look like? Need this for clearer reporting that "hey, these two items do suck"
+```{r}
+strong.m4 <- '
+
+  #####################
+  # MEASUREMENT MODEL #
+  #####################
+  
+  # Factor models for km at 6 waves (Constrained)
+  Fkm1 =~ a*km1_t1 + b*km2_t1 + c*km3_t1 + d*km4_t1 + e*km5_t1 + f*km6_t1
+  Fkm2 =~ a*km1_t2 + b*km2_t2 + c*km3_t2 + d*km4_t2 + e*km5_t2 + f*km6_t2
+  Fkm3 =~ a*km1_t3 + b*km2_t3 + c*km3_t3 + d*km4_t3 + e*km5_t3 + f*km6_t3
+  Fkm4 =~ a*km1_t4 + b*km2_t4 + c*km3_t4 + d*km4_t4 + e*km5_t4 + f*km6_t4
+  Fkm5 =~ a*km1_t5 + b*km2_t5 + c*km3_t5 + d*km4_t5 + e*km5_t5 + f*km6_t5
+  Fkm6 =~ a*km1_t6 + b*km2_t6 + c*km3_t6 + d*km4_t6 + e*km5_t6 + f*km6_t6
+  
+  # Factor models for ppr at 6 waves (Constrained)
+  Fppr1 =~ g*ppr1_t1 + h*ppr2_t1 + i*ppr3_t1 + j*ppr4_t1
+  Fppr2 =~ g*ppr1_t2 + h*ppr2_t2 + i*ppr3_t2 + j*ppr4_t2
+  Fppr3 =~ g*ppr1_t3 + h*ppr2_t3 + i*ppr3_t3 + j*ppr4_t3
+  Fppr4 =~ g*ppr1_t4 + h*ppr2_t4 + i*ppr3_t4 + j*ppr4_t4
+  Fppr5 =~ g*ppr1_t5 + h*ppr2_t5 + i*ppr3_t5 + j*ppr4_t5
+  Fppr6 =~ g*ppr1_t6 + h*ppr2_t6 + i*ppr3_t6 + j*ppr4_t6
+  
+  # Constrained intercepts over time (Strong invariance)
+  km1_t1 + km1_t2 + km1_t3 + km1_t4 + km1_t5 + km1_t6 ~ k*1
+  km4_t1 + km4_t2 + km4_t3 + km4_t4 + km4_t5 + km4_t6 ~ l*1
+  km5_t1 + km5_t2 + km5_t3 + km5_t4 + km5_t5 + km5_t6 ~ m*1
+  km6_t1 + km6_t2 + km6_t3 + km6_t4 + km6_t5 + km6_t6 ~ n*1
+  
+  ppr1_t1 + ppr1_t2 + ppr1_t3 + ppr1_t4 + ppr1_t5 + ppr1_t6 ~ o*1
+  ppr2_t1 + ppr2_t2 + ppr2_t3 + ppr2_t4 + ppr2_t5 + ppr2_t6 ~ p*1
+  ppr3_t1 + ppr3_t2 + ppr3_t3 + ppr3_t4 + ppr3_t5 + ppr3_t6 ~ q*1
+  ppr4_t1 + ppr4_t2 + ppr4_t3 + ppr4_t4 + ppr4_t5 + ppr4_t6 ~ r*1
+  
+  
+  # Free latent means from t=2 onward (only do this in combination with constraints on intercepts, above)
+  Fkm2 + Fkm3 + Fkm4 + Fkm5 + Fkm6 + Fppr2 + Fppr3 + Fppr4 + Fppr5 + Fppr6 ~ 1
+  
+  ################
+  # BETWEEN PART #
+  ################
+  
+  # Create between factors (RIs)
+  RIkm =~ 1*Fkm1 + 1*Fkm2 + 1*Fkm3 + 1*Fkm4 + 1*Fkm5 + 1*Fkm6
+  RIppr =~ 1*Fppr1 + 1*Fppr2 + 1*Fppr3 + 1*Fppr4 + 1*Fppr5 + 1*Fppr6
+  
+  # Set residual variances of all Fkm and Fppr vars to 0
+  # I think this specifies all variance of the factors goes to either w/n or b/n
+  Fkm1 ~~ 0*Fkm1
+  Fkm2 ~~ 0*Fkm2
+  Fkm3 ~~ 0*Fkm3
+  Fkm4 ~~ 0*Fkm4
+  Fkm5 ~~ 0*Fkm5
+  Fkm6 ~~ 0*Fkm6
+  Fppr1 ~~ 0*Fppr1
+  Fppr2 ~~ 0*Fppr2
+  Fppr3 ~~ 0*Fppr3
+  Fppr4 ~~ 0*Fppr4
+  Fppr5 ~~ 0*Fppr5
+  Fppr6 ~~ 0*Fppr6
+
+  ###############
+  # WITHIN PART #
+  ###############
+
+  # Create within-components
+  WFkm1 =~ 1*Fkm1
+  WFkm2 =~ 1*Fkm2
+  WFkm3 =~ 1*Fkm3
+  WFkm4 =~ 1*Fkm4
+  WFkm5 =~ 1*Fkm5
+  WFkm6 =~ 1*Fkm6
+  
+  WFppr1 =~ 1*Fppr1
+  WFppr2 =~ 1*Fppr2
+  WFppr3 =~ 1*Fppr3
+  WFppr4 =~ 1*Fppr4
+  WFppr5 =~ 1*Fppr5
+  WFppr6 =~ 1*Fppr6
+  
+  # Specify lagged effects between within-person centered latent variables
+  WFkm2 + WFppr2 ~ WFkm1 + WFppr1
+  WFkm3 + WFppr3 ~ WFkm2 + WFppr2
+  WFkm4 + WFppr4 ~ WFkm3 + WFppr3
+  WFkm5 + WFppr5 ~ WFkm4 + WFppr4
+  WFkm6 + WFppr6 ~ WFkm5 + WFppr5
+  
+  # Estimate correlations within same wave
+  WFkm1 ~~ s*WFppr1 #I am pretty sure they missed this line in the og tutorial
+  WFkm2 ~~ s*WFppr2
+  WFkm3 ~~ s*WFppr3
+  WFkm4 ~~ s*WFppr4
+  WFkm5 ~~ s*WFppr5
+  WFkm6 ~~ s*WFppr6
+  
+  ##########################
+  # ADDITIONAL CONSTRAINTS #
+  ##########################
+  
+  # Set correlations between between-factors (RIs) and within-factors at wave 1 at 0
+  RIkm + RIppr ~~ 0*WFkm1 + 0*WFppr1
+  
+'
+
+
+strong.m4.fit <- cfa(strong.m4,
+                   data = dfSEM,
+                   std.lv = T,
+                   missing = "ML"
+                   )
+summary(strong.m4.fit, fit.measures = T, standardized =T, ci = T)
+```
+
+```{r}
+anova(strong.m4.fit, strong.m1.fit)
+```
+Not a clean comparison, but just to show that m4 (with the added km measures) is indeed not as good as one with them removed. 
 
 #### Configural W/Demographic Covariate
 Let's skip straight to the km2 and km3 cut. We can proceed as per the weak and strong tests from here though.
@@ -2797,12 +3097,12 @@ strongInvar.m1 <- '
   WFkm6 + WFppr6 ~ s*WFkm5 + t*WFppr5
   
   # Estimate correlations within same wave
-  WFkm1 ~~ WFppr1 #I am pretty sure they missed this line in the og tutorial
-  WFkm2 ~~ WFppr2
-  WFkm3 ~~ WFppr3
-  WFkm4 ~~ WFppr4
-  WFkm5 ~~ WFppr5
-  WFkm6 ~~ WFppr6
+  WFkm1 ~~ u*WFppr1 #I am pretty sure they missed this line in the og tutorial
+  WFkm2 ~~ u*WFppr2
+  WFkm3 ~~ u*WFppr3
+  WFkm4 ~~ u*WFppr4
+  WFkm5 ~~ u*WFppr5
+  WFkm6 ~~ u*WFppr6
   
   ##########################
   # ADDITIONAL CONSTRAINTS #
