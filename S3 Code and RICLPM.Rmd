@@ -369,6 +369,7 @@ ggplot(dfDem, aes(x = Parstudy)) +
 ### Intistution
 
 ```{r}
+table(dfDem$Institution)
 prop.table(table(dfDem$Institution))*100
 
 ggplot(dfDem, aes(x = Institution)) +
@@ -590,7 +591,7 @@ o1 |>
 p1 <- ggplot(o1, aes(x = KMtot)) +
   geom_bar() +
   #geom_vline(xintercept = mean(o1$KMtot), color = "red", linetype = "longdash") +
-  labs(title = "Meeting >0 of Total Scale Threshold",
+  labs(title = "Score >0 (out of 16) Threshold",
        x = "Number of Days",
        y = "Number of People")
 ```
@@ -628,7 +629,7 @@ o1 |>
 p2 <- ggplot(o1, aes(x = KMtot)) +
   geom_bar() +
  # geom_vline(xintercept = mean(o1$KMtot), color = "red", linetype = "longdash") +
-  labs(title = "Meeting >1/4 of Total Scale Threshold",
+  labs(title = "Score >4 (out of 16) Threshold",
        x = "Number of Days",
        y = "Number of People")
 ```
@@ -666,7 +667,7 @@ o1 |>
 p3 <- ggplot(o1, aes(x = KMtot)) +
   geom_bar() +
   #geom_vline(xintercept = mean(o1$KMtot), color = "red", linetype = "longdash") +
-  labs(title = "Meeting >1/2 of Total Scale Threshold",
+  labs(title = "Score >8 (out of 16) Threshold",
        x = "Number of Days",
        y = "Number of People")
 ```
@@ -705,7 +706,7 @@ o1 |>
 p4 <- ggplot(o1, aes(x = KMtot)) +
   geom_bar() +
   #geom_vline(xintercept = mean(o1$KMtot), color = "red", linetype = "longdash") +
-  labs(title = "Meeting >3/4 of Total Scale Threshold",
+  labs(title = "Score >12 (out of 16) Threshold",
        x = "Number of Days",
        y = "Number of People")
 ```
@@ -992,7 +993,7 @@ o1 |>
        OtherKM = "Remaining",
        Stranger = "Remaining"
        ),
-    Evoker = factor(Evoker, levels = c("Partner", "Friend", "Family", "Music", "Nature", "Remaining"))
+    Evoker = factor(Evoker, levels = c("Partner", "Family", "Friend", "Music", "Nature", "Remaining"))
     #relevel it again from here for re-ordering?
     ) |> 
   filter(!is.na(MarkTotal)) |> #to get rid of those folks who reported evokers but just on items2 and 3 (which are cut)
@@ -1000,7 +1001,7 @@ o1 |>
   geom_bar(position = "fill", stat = "count") +
   theme(axis.text.x = element_text(vjust = 0.5)) +
   scale_fill_viridis(discrete=TRUE) +
-  labs(title = "S3 Evokers",
+  labs(title = "Study 3 Evokers",
        x = "Threshold of Kama Muta Scale",
        y = "Percentage")
 ```
@@ -1127,19 +1128,22 @@ grid.arrange(p1,p2,p3,p4,p5,p6, nrow = 3)
 ##### Distribution by Institution?
 
 ```{r}
-p1<- ggplot(data = df, aes(x = day, y = ppr1, group = day)) +
+o1 <- df
+levels(o1$Institution) <- c("Locale 1", "Locale 2", "Locale 3")
+
+p1<- ggplot(data = o1, aes(x = day, y = ppr1, group = day)) +
   geom_boxplot(alpha = .5) +
   stat_summary(fun.y = "mean") + 
   facet_wrap(~Institution)
-p2<- ggplot(data = df, aes(x = day, y = ppr2, group = day)) +
+p2<- ggplot(data = o1, aes(x = day, y = ppr2, group = day)) +
   geom_boxplot(alpha = .5) +
   stat_summary(fun.y = "mean") +
   facet_wrap(~Institution)
-p3<- ggplot(data = df, aes(x = day, y = ppr3, group = day)) +
+p3<- ggplot(data = o1, aes(x = day, y = ppr3, group = day)) +
   geom_boxplot(alpha = .5) +
   stat_summary(fun.y = "mean") +
   facet_wrap(~Institution)
-p4<- ggplot(data = df, aes(x = day, y = ppr4, group = day)) +
+p4<- ggplot(data = o1, aes(x = day, y = ppr4, group = day)) +
   geom_boxplot(alpha = .5) +
   stat_summary(fun.y = "mean") +
   facet_wrap(~Institution)
@@ -1149,7 +1153,10 @@ grid.arrange(p1,p2, p3,p4, nrow = 2)
 
 
 ```{r}
-p1<- ggplot(data = df, aes(x = day, y = km1, group = day)) +
+o1 <- df
+levels(o1$Institution) <- c("Locale 1", "Locale 2", "Locale 3")
+  
+p1<- ggplot(data = o1, aes(x = day, y = km1, group = day)) +
   geom_boxplot(alpha = .5) +
   stat_summary(fun.y = "mean") +
   facet_wrap(~Institution)
@@ -1161,15 +1168,15 @@ p1<- ggplot(data = df, aes(x = day, y = km1, group = day)) +
 #  geom_boxplot(alpha = .5) +
 #  stat_summary(fun.y = "mean") +
 #  facet_wrap(~Institution)
-p4<- ggplot(data = df, aes(x = day, y = km4, group = day)) +
+p4<- ggplot(data = o1, aes(x = day, y = km4, group = day)) +
   geom_boxplot(alpha = .5) +
   stat_summary(fun.y = "mean") +
   facet_wrap(~Institution)
-p5<- ggplot(data = df, aes(x = day, y = km5, group = day)) +
+p5<- ggplot(data = o1, aes(x = day, y = km5, group = day)) +
   geom_boxplot(alpha = .5) +
   stat_summary(fun.y = "mean") +
   facet_wrap(~Institution)
-p6<- ggplot(data = df, aes(x = day, y = km6, group = day)) +
+p6<- ggplot(data = o1, aes(x = day, y = km6, group = day)) +
   geom_boxplot(alpha = .5) +
   stat_summary(fun.y = "mean") +
   facet_wrap(~Institution)
@@ -3256,6 +3263,10 @@ summary(strongInvar.m2.fit, fit.measures = T, standardized =T, ci = T)
 anova(strongInvar.m2.fit, strong.m3.fit)
 ```
 TECHNICALLY this model is not statistically significantly different than the m3 model, which tells me that I CAN use this as my main model actually. I.e. it is fair to say that KM -> KM is fixed along the period, and that PPR -> PPR is fixed along the period 
+
+```{r}
+modindices(strongInvar.m2.fit, sort = T)
+```
 
 
 ## Covariate PA Model
